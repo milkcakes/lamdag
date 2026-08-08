@@ -116,6 +116,91 @@ def _before_request():
             abort(400, description="Invalid or missing CSRF token")
     if not token:
         session["_csrf_token"] = secrets.token_urlsafe(32)
+    if _access_gate_enabled() and not session.get("_access_granted"):
+        path = request.path
+        if path != "/access" and not path.startswith("/static/"):
+            return redirect(url_for("access", next=path))
+
+
+def _access_gate_enabled():
+    """Gate is on when an env master code is set OR there are active school codes."""
+    if _get_master_code():
+        return True
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        row = cur.execute(
+            "SELECT COUNT(*) FROM school_access WHERE active = 1 AND "
+            "(expires_at IS NULL OR expires_at = '' OR expires_at >= date('now'))"
+        ).fetchone()
+        conn.close()
+        return bool(row and row[0] > 0)
+    except Exception:
+        return False
+
+
+def _get_master_code():
+    code = os.environ.get("LAMDAG_ACCESS_CODE", "").strip()
+    if not code:
+        code = (_load_config() or {}).get("access_code", "").strip()
+    return code
+
+
+def _lookup_school_code(sent):
+    """Return (school_name, plan) if the code belongs to an active school code."""
+    if not sent:
+        return None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        row = cur.execute(
+            "SELECT school_name, plan, expires_at FROM school_access "
+            "WHERE access_code = ? AND active = 1", (sent,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return None
+        if row[2] and row[2] and row[2] < datetime.now().strftime("%Y-%m-%d"):
+            return None
+        return {"school": row[0], "plan": row[1]}
+    except Exception:
+        return None
+
+
+@app.route("/access", methods=["GET", "POST"])
+def access():
+    if not _access_gate_enabled():
+        return redirect(url_for("index"))
+    if session.get("_access_granted"):
+        return redirect(request.args.get("next") or url_for("index"))
+    error = ""
+    if request.method == "POST":
+        sent = request.form.get("access_code", "").strip()
+        master = _get_master_code()
+        if master and secrets.compare_digest(sent, master):
+            session["_access_granted"] = True
+            session["_access_admin"] = True
+            session["_access_school"] = "LAMDAG Admin"
+            return redirect(request.args.get("next") or url_for("index"))
+        school = _lookup_school_code(sent)
+        if school:
+            session["_access_granted"] = True
+            session["_access_admin"] = False
+            session["_access_school"] = school["school"]
+            session["_access_plan"] = school["plan"]
+            return redirect(request.args.get("next") or url_for("index"))
+        error = "That access code is not correct. Please try again."
+    return render_template("access.html", error=error,
+                           next_path=request.args.get("next") or "")
+
+
+@app.route("/access/logout", methods=["POST"])
+def access_logout():
+    session.pop("_access_granted", None)
+    session.pop("_access_admin", None)
+    session.pop("_access_school", None)
+    session.pop("_access_plan", None)
+    return redirect(url_for("access"))
 
 from database.init_db import get_connection
 from generators.ilaw_docx import generate_ilaw_docx
@@ -932,6 +1017,81 @@ def my_plans():
     return render_template("my_plans.html", plans=plans)
 
 
+@app.route("/admin/access", methods=["GET", "POST"])
+def admin_access():
+    if not session.get("_access_admin"):
+        return redirect(url_for("index"))
+    msg = ""
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        if action == "create":
+            school = request.form.get("school_name", "").strip()
+            plan = request.form.get("plan", "school_license")
+            expires = request.form.get("expires_at", "").strip()
+            if school:
+                code = _new_access_code()
+                conn = get_connection()
+                conn.execute(
+                    "INSERT INTO school_access (school_name, access_code, plan, created_at, expires_at, active, notes) "
+                    "VALUES (?, ?, ?, ?, ?, 1, ?)",
+                    (school, code, plan, datetime.now().strftime("%Y-%m-%d %H:%M"),
+                     expires or None, request.form.get("notes", "").strip()),
+                )
+                conn.commit()
+                conn.close()
+                msg = f"Created code for {school}: {code}"
+        elif action == "disable":
+            code_id = request.form.get("id", "")
+            conn = get_connection()
+            conn.execute("UPDATE school_access SET active = 0 WHERE id = ?", (code_id,))
+            conn.commit()
+            conn.close()
+            msg = "Access code disabled."
+        elif action == "enable":
+            code_id = request.form.get("id", "")
+            conn = get_connection()
+            conn.execute("UPDATE school_access SET active = 1 WHERE id = ?", (code_id,))
+            conn.commit()
+            conn.close()
+            msg = "Access code re-enabled."
+        elif action == "delete":
+            code_id = request.form.get("id", "")
+            conn = get_connection()
+            conn.execute("DELETE FROM school_access WHERE id = ?", (code_id,))
+            conn.commit()
+            conn.close()
+            msg = "Access code deleted."
+
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT id, school_name, access_code, plan, created_at, expires_at, active, notes "
+        "FROM school_access ORDER BY active DESC, created_at DESC"
+    ).fetchall()
+    conn.close()
+    codes = [
+        {
+            "id": r[0], "school_name": r[1], "access_code": r[2], "plan": r[3],
+            "created_at": r[4], "expires_at": r[5], "active": bool(r[6]), "notes": r[7],
+        }
+        for r in rows
+    ]
+    return render_template("admin_access.html", codes=codes, msg=msg)
+
+
+def _new_access_code():
+    """6-char, human-friendly code (letters + digits, no confusing chars)."""
+    alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+    while True:
+        code = "".join(secrets.choice(alphabet) for _ in range(6))
+        conn = get_connection()
+        exists = conn.execute(
+            "SELECT COUNT(*) FROM school_access WHERE access_code = ?", (code,)
+        ).fetchone()[0]
+        conn.close()
+        if not exists:
+            return code
+
+
 @app.route("/load/<int:plan_id>")
 def load_plan(plan_id):
     conn = get_connection()
@@ -1071,6 +1231,11 @@ def settings():
         feedback_response_url=(cfg.get("feedback_response_url") or ""),
         feedback_entries_json=json.dumps(cfg.get("feedback_entries") or {}),
     )
+
+
+@app.route("/support")
+def support():
+    return render_template("support.html")
 
 
 def _submit_feedback_cloud(name, email, rating, area, liked, problem, suggestions):

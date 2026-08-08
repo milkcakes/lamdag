@@ -302,6 +302,46 @@ nav {
     transition: all 0.2s;
 }
 
+.donate-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.donate-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    background: var(--card, transparent);
+}
+
+.donate-card h3 {
+    font-family: 'Georgia', serif;
+    font-size: 1.05rem;
+    margin: 0 0 10px;
+}
+
+.qr-img {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.donate-num {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 0 0 4px;
+}
+
+.donate-thanks {
+    border-top: 1px solid var(--line-soft, var(--line-strong));
+    padding-top: 18px;
+    text-align: center;
+}
+
 .theme-toggle:hover {
     border-color: var(--gold);
     color: var(--gold-deep);

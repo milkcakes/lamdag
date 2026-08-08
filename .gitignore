@@ -10,3 +10,5 @@ database/backups/
 error.log
 *.pem
 export/
+/matatag_cg.db
+/static/qr_old/

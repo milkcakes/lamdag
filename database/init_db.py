@@ -242,6 +242,16 @@ def init_database():
             synced INTEGER DEFAULT 0,
             sync_note TEXT DEFAULT ''
         );
+        CREATE TABLE IF NOT EXISTS school_access (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            school_name TEXT NOT NULL,
+            access_code TEXT NOT NULL UNIQUE,
+            plan TEXT DEFAULT 'school_license',
+            created_at TEXT NOT NULL,
+            expires_at TEXT,
+            active INTEGER DEFAULT 1,
+            notes TEXT DEFAULT ''
+        );
     """)
     conn.commit()
     conn.close()

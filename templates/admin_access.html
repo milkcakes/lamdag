@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="max-width:1100px;">
+    <div class="manage-head">
+        <h2>School Access Codes</h2>
+        <div class="stats-pill">
+            <span class="stat-num">{{ codes|length }}</span>
+            <span class="stat-label">codes</span>
+        </div>
+    </div>
+    <p class="muted-text" style="margin-bottom:16px;">
+        Generate a shared access code per school. Teachers enter it on the LAMDAG gate page.
+        The master code (env <code>LAMDAG_ACCESS_CODE</code>) also unlocks this page.
+    </p>
+
+    {% if msg %}
+    <div class="draft-banner" style="margin-bottom:16px;">
+        <div class="draft-banner-info">
+            <div class="draft-banner-title">{{ msg }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/admin/access" class="filter-box">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="action" value="create">
+        <div class="form-row">
+            <div class="form-group" style="flex:2;">
+                <label for="school_name">School Name</label>
+                <input type="text" id="school_name" name="school_name" placeholder="e.g. Bantayan Elementary School" required>
+            </div>
+            <div class="form-group">
+                <label for="plan">Plan</label>
+                <select id="plan" name="plan">
+                    <option value="school_license">School License</option>
+                    <option value="division">Division/District</option>
+                    <option value="trial">Trial</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="expires_at">Expires (optional)</label>
+                <input type="date" id="expires_at" name="expires_at">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label for="notes">Notes</label>
+                <input type="text" id="notes" name="notes" placeholder="optional">
+            </div>
+            <div class="form-group" style="align-self:flex-end;">
+                <button type="submit" class="btn btn-cta">Create Code</button>
+            </div>
+        </div>
+    </form>
+
+    <div style="overflow-x:auto;">
+        <table class="data-table" style="width:100%; margin-top:20px;">
+            <thead>
+                <tr>
+                    <th>School</th>
+                    <th>Code</th>
+                    <th>Plan</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in codes %}
+                <tr>
+                    <td>{{ c.school_name }}</td>
+                    <td><code style="letter-spacing:0.15em;">{{ c.access_code }}</code></td>
+                    <td>{{ c.plan }}</td>
+                    <td>{{ c.created_at }}</td>
+                    <td>{{ c.expires_at or '—' }}</td>
+                    <td>{% if c.active %}<span style="color:var(--success,#3a7d44);font-weight:600;">Active</span>{% else %}<span style="color:var(--danger,#a33a2e);font-weight:600;">Disabled</span>{% endif %}</td>
+                    <td>{{ c.notes }}</td>
+                    <td>
+                        {% if c.active %}
+                        <form method="POST" action="/admin/access" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="disable">
+                            <input type="hidden" name="id" value="{{ c.id }}">
+                            <button type="submit" class="btn-small">Disable</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="/admin/access" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="enable">
+                            <input type="hidden" name="id" value="{{ c.id }}">
+                            <button type="submit" class="btn-small">Enable</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="/admin/access" style="display:inline;"
+                              onsubmit="return confirm('Delete this code permanently?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="id" value="{{ c.id }}">
+                            <button type="submit" class="btn-small btn-discard">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="muted-text" style="text-align:center;">No access codes yet — create the first one above.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

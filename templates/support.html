@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="max-width:900px;">
+    <div class="manage-head">
+        <h2>Support LAMDAG</h2>
+    </div>
+    <p class="muted-text" style="margin-bottom:24px;">
+        LAMDAG is a tool for teachers, built by a teacher. Your support keeps the
+        servers running, pays for updates, and helps more schools access it.
+        Every donation — big or small — is deeply appreciated.
+    </p>
+
+    <div class="donate-row">
+        <div class="donate-card">
+            <h3>GCash</h3>
+            <img src="/static/qr/GCASH.jpg" alt="GCash QR code" class="qr-img" loading="lazy">
+            <p class="donate-num">09952274754</p>
+            <p class="muted-text">Scan to pay or send to the number above.</p>
+        </div>
+        <div class="donate-card">
+            <h3>GoTyme</h3>
+            <img src="/static/qr/GOTYME.jpg" alt="GoTyme QR code" class="qr-img" loading="lazy">
+            <p class="donate-num">Scan QR</p>
+            <p class="muted-text">Scan with the GoTyme app.</p>
+        </div>
+        <div class="donate-card">
+            <h3>MariBank</h3>
+            <img src="/static/qr/MARIBANK.jpg" alt="MariBank QR code" class="qr-img" loading="lazy">
+            <p class="donate-num">Scan QR</p>
+            <p class="muted-text">Scan with the MariBank app.</p>
+        </div>
+        <div class="donate-card">
+            <h3>UnionBank</h3>
+            <img src="/static/qr/UNIONBANK.jpg" alt="UnionBank QR code" class="qr-img" loading="lazy">
+            <p class="donate-num">Scan QR</p>
+            <p class="muted-text">Scan with the UnionBank app.</p>
+        </div>
+    </div>
+
+    <div class="donate-thanks">
+        <p>Salamat kaayo sa imong suporta! <strong>Maraming salamat!</strong></p>
+        <p class="muted-text">Questions about school access codes? Contact your school head or the LAMDAG administrator.</p>
+    </div>
+</div>
+{% endblock %}
