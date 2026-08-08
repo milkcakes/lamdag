@@ -2,12 +2,15 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System libraries needed by WeasyPrint (Pango, Cairo, GDK-Pixbuf) and fonts
-# for the fpdf2 fallback (DejaVu/Liberation cover Latin + Filipino text).
+# System libraries needed by WeasyPrint 69 (Pango, Cairo, GDK-Pixbuf, HarfBuzz)
+# and fonts for the fpdf2 fallback (DejaVu/Liberation cover Latin + Filipino).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpango-1.0-0 \
+        libpangoft2-1.0-0 \
         libpangocairo-1.0-0 \
         libgdk-pixbuf-2.0-0 \
+        libharfbuzz0b \
+        libharfbuzz-subset0 \
         libffi8 \
         shared-mime-info \
         fonts-dejavu \
