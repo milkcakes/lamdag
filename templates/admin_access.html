@@ -9,8 +9,9 @@
         </div>
     </div>
     <p class="muted-text" style="margin-bottom:16px;">
-        Generate a shared access code per school. Teachers enter it on the LAMDAG gate page.
-        The master code (env <code>LAMDAG_ACCESS_CODE</code>) also unlocks this page.
+        Generate a shared access code per school, per teacher, or for beta testers.
+        Teachers enter it on the LAMDAG gate page. Leave <strong>Expires</strong> empty for
+        permanent access (no expiry). The master code (env <code>LAMDAG_ACCESS_CODE</code>) also unlocks this page.
     </p>
 
     {% if msg %}
@@ -26,15 +27,27 @@
         <input type="hidden" name="action" value="create">
         <div class="form-row">
             <div class="form-group" style="flex:2;">
-                <label for="school_name">School Name</label>
-                <input type="text" id="school_name" name="school_name" placeholder="e.g. Bantayan Elementary School" required>
+                <label for="school_name">Name (School or Teacher)</label>
+                <input type="text" id="school_name" name="school_name" placeholder="e.g. Bantayan Elementary School / Maria Santos" required>
+            </div>
+            <div class="form-group">
+                <label for="kind">Type</label>
+                <select id="kind" name="kind">
+                    <option value="school">School License</option>
+                    <option value="teacher">Per-Teacher</option>
+                    <option value="beta">Beta Tester</option>
+                    <option value="trial">Trial</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="plan">Plan</label>
                 <select id="plan" name="plan">
                     <option value="school_license">School License</option>
+                    <option value="teacher_monthly">Teacher Monthly</option>
+                    <option value="teacher_yearly">Teacher Yearly</option>
                     <option value="division">Division/District</option>
                     <option value="trial">Trial</option>
+                    <option value="beta">Beta</option>
                 </select>
             </div>
             <div class="form-group">
@@ -55,7 +68,8 @@
         <table class="data-table" style="width:100%; margin-top:20px;">
             <thead>
                 <tr>
-                    <th>School</th>
+                    <th>Name</th>
+                    <th>Type</th>
                     <th>Code</th>
                     <th>Plan</th>
                     <th>Created</th>
@@ -69,10 +83,11 @@
                 {% for c in codes %}
                 <tr>
                     <td>{{ c.school_name }}</td>
+                    <td>{% if c.kind == 'beta' %}<span style="color:var(--gold-deep,#a9791f);font-weight:700;">Beta</span>{% elif c.kind == 'teacher' %}Per-Teacher{% elif c.kind == 'trial' %}Trial{% else %}School{% endif %}</td>
                     <td><code style="letter-spacing:0.15em;">{{ c.access_code }}</code></td>
                     <td>{{ c.plan }}</td>
                     <td>{{ c.created_at }}</td>
-                    <td>{{ c.expires_at or '—' }}</td>
+                    <td>{{ c.expires_at or 'Never' }}</td>
                     <td>{% if c.active %}<span style="color:var(--success,#3a7d44);font-weight:600;">Active</span>{% else %}<span style="color:var(--danger,#a33a2e);font-weight:600;">Disabled</span>{% endif %}</td>
                     <td>{{ c.notes }}</td>
                     <td>
@@ -102,7 +117,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" class="muted-text" style="text-align:center;">No access codes yet — create the first one above.</td>
+                    <td colspan="9" class="muted-text" style="text-align:center;">No access codes yet — create the first one above.</td>
                 </tr>
                 {% endfor %}
             </tbody>

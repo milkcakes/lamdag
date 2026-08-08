@@ -184,6 +184,10 @@ def _migrate():
     for col, ctype in (("email", "TEXT DEFAULT ''"), ("area", "TEXT DEFAULT ''")):
         if col not in fb_cols:
             cursor.execute(f'ALTER TABLE feedbacks ADD COLUMN "{col}" {ctype}')
+    cursor.execute("PRAGMA table_info(school_access)")
+    sa_cols = {row[1] for row in cursor.fetchall()}
+    if "kind" not in sa_cols:
+        cursor.execute('ALTER TABLE school_access ADD COLUMN "kind" TEXT DEFAULT "school"')
     conn.commit()
     conn.close()
 
@@ -247,6 +251,7 @@ def init_database():
             school_name TEXT NOT NULL,
             access_code TEXT NOT NULL UNIQUE,
             plan TEXT DEFAULT 'school_license',
+            kind TEXT DEFAULT 'school',
             created_at TEXT NOT NULL,
             expires_at TEXT,
             active INTEGER DEFAULT 1,

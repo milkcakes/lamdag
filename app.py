@@ -1027,19 +1027,20 @@ def admin_access():
         if action == "create":
             school = request.form.get("school_name", "").strip()
             plan = request.form.get("plan", "school_license")
+            kind = request.form.get("kind", "school")
             expires = request.form.get("expires_at", "").strip()
             if school:
                 code = _new_access_code()
                 conn = get_connection()
                 conn.execute(
-                    "INSERT INTO school_access (school_name, access_code, plan, created_at, expires_at, active, notes) "
-                    "VALUES (?, ?, ?, ?, ?, 1, ?)",
-                    (school, code, plan, datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "INSERT INTO school_access (school_name, access_code, plan, kind, created_at, expires_at, active, notes) "
+                    "VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+                    (school, code, plan, kind, datetime.now().strftime("%Y-%m-%d %H:%M"),
                      expires or None, request.form.get("notes", "").strip()),
                 )
                 conn.commit()
                 conn.close()
-                msg = f"Created code for {school}: {code}"
+                msg = f"Created {kind} code for {school}: {code}"
         elif action == "disable":
             code_id = request.form.get("id", "")
             conn = get_connection()
@@ -1064,14 +1065,15 @@ def admin_access():
 
     conn = get_connection()
     rows = conn.execute(
-        "SELECT id, school_name, access_code, plan, created_at, expires_at, active, notes "
+        "SELECT id, school_name, access_code, plan, kind, created_at, expires_at, active, notes "
         "FROM school_access ORDER BY active DESC, created_at DESC"
     ).fetchall()
     conn.close()
     codes = [
         {
             "id": r[0], "school_name": r[1], "access_code": r[2], "plan": r[3],
-            "created_at": r[4], "expires_at": r[5], "active": bool(r[6]), "notes": r[7],
+            "kind": r[4], "created_at": r[5], "expires_at": r[6], "active": bool(r[7]),
+            "notes": r[8],
         }
         for r in rows
     ]

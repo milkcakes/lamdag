@@ -354,6 +354,61 @@ a.nav-school:hover {
     max-width: 200px;
     border-radius: 8px;
     margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.qr-btn {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: zoom-in;
+    margin-bottom: 10px;
+}
+
+.qr-btn .qr-img {
+    margin-bottom: 0;
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.qr-btn:hover .qr-img {
+    transform: scale(1.04);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.qr-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(10, 8, 5, 0.88);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    cursor: zoom-out;
+}
+
+.qr-lightbox.open {
+    display: flex;
+}
+
+.qr-lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+    background: #fff;
+    padding: 8px;
+}
+
+.qr-lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 28px;
+    color: #fff;
+    font-size: 2.6rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .donate-num {

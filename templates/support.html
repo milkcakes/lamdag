@@ -10,28 +10,38 @@
         Every donation — big or small — is deeply appreciated.
     </p>
 
+    <p class="muted-text" style="margin-bottom:16px;"><em>Tap any QR code to make it larger for scanning.</em></p>
+
     <div class="donate-row">
         <div class="donate-card">
             <h3>GCash</h3>
-            <img src="/static/qr/GCASH.jpg" alt="GCash QR code" class="qr-img" loading="lazy">
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/GCASH.jpg" alt="GCash QR code" class="qr-img" loading="lazy">
+            </button>
             <p class="donate-num">09952274754</p>
             <p class="muted-text">Scan to pay or send to the number above.</p>
         </div>
         <div class="donate-card">
             <h3>GoTyme</h3>
-            <img src="/static/qr/GOTYME.jpg" alt="GoTyme QR code" class="qr-img" loading="lazy">
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/GOTYME.jpg" alt="GoTyme QR code" class="qr-img" loading="lazy">
+            </button>
             <p class="donate-num">Scan QR</p>
             <p class="muted-text">Scan with the GoTyme app.</p>
         </div>
         <div class="donate-card">
             <h3>MariBank</h3>
-            <img src="/static/qr/MARIBANK.jpg" alt="MariBank QR code" class="qr-img" loading="lazy">
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/MARIBANK.jpg" alt="MariBank QR code" class="qr-img" loading="lazy">
+            </button>
             <p class="donate-num">Scan QR</p>
             <p class="muted-text">Scan with the MariBank app.</p>
         </div>
         <div class="donate-card">
             <h3>UnionBank</h3>
-            <img src="/static/qr/UNIONBANK.jpg" alt="UnionBank QR code" class="qr-img" loading="lazy">
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/UNIONBANK.jpg" alt="UnionBank QR code" class="qr-img" loading="lazy">
+            </button>
             <p class="donate-num">Scan QR</p>
             <p class="muted-text">Scan with the UnionBank app.</p>
         </div>
@@ -42,4 +52,28 @@
         <p class="muted-text">Questions about school access codes? Contact your school head or the LAMDAG administrator.</p>
     </div>
 </div>
+
+<div id="qr-lightbox" class="qr-lightbox" onclick="closeQr()" role="dialog" aria-label="QR code enlarged">
+    <img id="qr-lightbox-img" src="" alt="Enlarged QR code">
+    <span class="qr-lightbox-close">×</span>
+</div>
+
+<script>
+    function openQr(btn) {
+        var img = btn.querySelector('img');
+        var lb = document.getElementById('qr-lightbox');
+        var lbi = document.getElementById('qr-lightbox-img');
+        lbi.src = img.src;
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeQr() {
+        var lb = document.getElementById('qr-lightbox');
+        lb.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeQr();
+    });
+</script>
 {% endblock %}
