@@ -71,9 +71,15 @@
                     Settings
                 </a>
                 {% if session.get("_access_school") %}
+                {% if session.get("_access_admin") %}
+                <a href="/admin/access" class="nav-school" title="School Access Codes (admin)">
+                    ✦ Admin
+                </a>
+                {% else %}
                 <span class="nav-school" title="{{ session.get('_access_school') }}">
-                    {% if session.get("_access_admin") %}✦ Admin{% else %}{{ session.get("_access_school") }}{% endif %}
+                    {{ session.get("_access_school") }}
                 </span>
+                {% endif %}
                 <form method="POST" action="/access/logout" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit" class="theme-toggle" title="Sign out" aria-label="Sign out">

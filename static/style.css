@@ -287,6 +287,32 @@ nav {
     color: var(--gold-2);
 }
 
+.nav-school {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--gold-deep);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    border-radius: 20px;
+    margin-left: 6px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+a.nav-school:hover {
+    background: var(--gold);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .nav-school {
+    color: var(--gold-2);
+}
+
 .theme-toggle {
     display: flex;
     align-items: center;
