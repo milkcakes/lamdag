@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    {% set current = 3 %}
+    {% include "partials/wizard.html" %}
+    <h2>Step 3: Intentions (I)</h2>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="lesson_name">Name of Lesson</label>
+            <p class="field-hint">A short, descriptive title for this lesson.</p>
+            <input type="text" id="lesson_name" name="lesson_name" value="{{ lesson_name }}">
+        </div>
+
+        <div class="form-group">
+            <label for="objectives">Learning Objectives</label>
+            <p class="field-hint">Write the smaller knowledge, skills, or tasks from the competency that the learners will work on and be able to show by the end of the sessions.</p>
+            <textarea id="objectives" name="objectives" rows="4" required>{{ objectives }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="learner_context">Learner Context</label>
+            <p class="field-hint">Write your observations of your learners, strengths, interests, and barriers.</p>
+            <textarea id="learner_context" name="learner_context" rows="3">{{ learner_context }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="integration">Opportunities for Integration</label>
+            <p class="field-hint">Any possibilities to meaningfully integrate another area, special topic, or technology. Write N/A if none.</p>
+            <input type="text" id="integration" name="integration" value="{{ integration }}" placeholder="e.g., Pagmamahal sa Pamilya, Environmental Awareness">
+        </div>
+
+        <div class="form-actions">
+            <a href="/generate/step2" class="btn">← Back</a>
+            <button type="button" class="btn" onclick="regenerate()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Regenerate</button>
+            <button type="submit" class="btn">Next → Learning Experiences</button>
+        </div>
+    </form>
+    <script>
+    function regenerate() {
+        fetch('/suggest/regenerate?step=3').then(r=>r.json()).then(d=>{
+            document.getElementById('lesson_name').value = d.lesson_name;
+            document.getElementById('objectives').value = d.objectives;
+            document.getElementById('integration').value = d.integration;
+            document.getElementById('learner_context').value = d.learner_context;
+        });
+    }
+    </script>
+</div>
+{% endblock %}

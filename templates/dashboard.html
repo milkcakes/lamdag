@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block main_class %}dashboard-main{% endblock %}
+{% block content %}
+<div class="dashboard">
+    {% if draft %}
+    <div class="dashboard-shell">
+        <div class="draft-banner">
+            <div class="draft-banner-info">
+                <span class="draft-banner-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </span>
+                <div>
+                    {% if draft.complete %}
+                    <div class="draft-banner-title">Your lesson plan is ready</div>
+                    <div class="draft-banner-sub">View it in the <strong>Lesson Plan Preview</strong></div>
+                    {% else %}
+                    <div class="draft-banner-title">You have a draft in progress</div>
+                    <div class="draft-banner-sub">Currently on <strong>Step {{ draft.step }}: {{ draft.label }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="draft-banner-actions">
+                <a href="{{ draft.url }}" class="btn">{% if draft.complete %}View Preview{% else %}Continue Draft{% endif %}</a>
+                <form method="POST" action="/draft/discard" style="display:inline;"
+                      onsubmit="return confirm('Discard this draft? This cannot be undone.');">
+                    <button type="submit" class="btn btn-discard">Discard</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-top">
+        <section class="hero">
+            <div class="hero-inner">
+                <span class="eyebrow">Daily Lesson Plan Generator</span>
+                <h1>LAMDAG</h1>
+                <p class="subtitle">ILAW Framework · DepEd Curriculum SY {{ school_year }}</p>
+
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <span class="stat-num">{{ total_plans }}</span>
+                        <span class="stat-label">saved plans</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="stat-num">{{ term1_plans }}</span>
+                        <span class="stat-label">this term</span>
+                    </div>
+                    <div class="hero-stat">
+                        <span class="stat-num">{{ total_comps }}</span>
+                        <span class="stat-label">competencies</span>
+                    </div>
+                </div>
+
+                <div class="hero-actions">
+                    <a href="/generate" class="btn btn-cta btn-lg"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Start a New Lesson Plan</a>
+                    <a href="/manage" class="btn btn-ghost btn-lg">Manage Competencies</a>
+                </div>
+
+                <div class="hero-mvp">
+                    <div class="mvp-card">
+                        <div class="mvp-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                        </div>
+                        <div class="mvp-title">Mission</div>
+                        <p>Build complete, ILAW-aligned lesson plans in minutes — straight from the DepEd competencies.</p>
+                    </div>
+                    <div class="mvp-card">
+                        <div class="mvp-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </div>
+                        <div class="mvp-title">Vision</div>
+                        <p>Every teacher ready before the bell — with a clear plan, and learners who understood the lesson.</p>
+                    </div>
+                    <div class="mvp-card">
+                        <div class="mvp-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                        </div>
+                        <div class="mvp-title">Purpose</div>
+                        <p>Less time on planning paperwork — more time where it matters: with the learners.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="tools-rail">
+            <section class="tools-panel">
+                <h3>More Tools</h3>
+                <div class="tools-grid">
+                    <a href="/bow" class="tool tool-link">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </div>
+                        <div>
+                            <div class="tool-title">Budget of Work (BoW)</div>
+                        </div>
+                    </a>
+                    <a href="/generate" class="tool tool-link">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </div>
+                        <div>
+                            <div class="tool-title">Learning Exemplar</div>
+                            <div class="tool-desc">Craft a MATATAG lesson, then export it as an exemplar</div>
+                        </div>
+                    </a>
+                    <div class="tool disabled">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                        </div>
+                        <div>
+                            <div class="tool-title">Generate LAS</div>
+                            <span class="coming-soon">Coming Soon</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <div class="dashboard-shell">
+        <section class="recent-section">
+            <div class="section-head">
+                <h2>Recent Lesson Plans</h2>
+                <a href="/my-plans" class="btn-small">View All</a>
+            </div>
+
+            {% if recent %}
+            <div class="recent-list">
+                {% for p in recent %}
+                <a href="/load/{{ p.id }}" class="recent-row">
+                    <span class="row-subject">{{ p.subject }}</span>
+                    <span class="row-name">{{ p.name }}</span>
+                    <span class="row-meta">
+                        <span class="chip">{{ p.grade_level }}</span>
+                        <span class="chip">T{{ p.term }} · W{{ p.week }}</span>
+                    </span>
+                    <span class="row-date">{{ p.updated_at }}</span>
+                    <span class="row-arrow">→</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-data">
+                <p>No saved lesson plans yet. Generate one using <strong>Start a New Lesson Plan</strong> above and click <strong>Save</strong> to see it here.</p>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

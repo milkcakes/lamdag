@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    {% set current = 5 %}
+    {% include "partials/wizard.html" %}
+    <h2>Step 5: Assessment</h2>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="formative_assessment">Formative Assessment</label>
+            <p class="field-hint">Create a task, activity, or questions to evaluate learning and provide feedback. Include ways for learners to ask for guidance or support, and appropriate accommodations so all learners can demonstrate their understanding.</p>
+            <textarea id="formative_assessment" name="formative_assessment" rows="6">{{ formative_assessment }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/generate/step4" class="btn">← Back</a>
+            <button type="submit" class="btn">Next → Ways Forward</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

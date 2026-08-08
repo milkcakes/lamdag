@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.vscode/
+build/
+dist/
+gtk_runtime/
+session_files/
+database/backups/
+error.log
+*.pem
+export/

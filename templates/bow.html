@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    main { max-width: 1440px; }
+</style>
+
+<div class="bow-layout">
+    <aside class="bow-side">
+        <div class="bow-side-title">Grade Level</div>
+        <nav class="bow-grade-nav">
+            {% for g in grades %}
+            <a class="bow-grade-link{% if grade == g %} active{% endif %}"
+               href="/bow?grade={{ g }}">
+                <span class="bow-grade-dot"></span>
+                {{ g }}
+            </a>
+            {% endfor %}
+        </nav>
+    </aside>
+
+    <section class="bow-main">
+        <div class="manage-head">
+            <h2>
+                {% if grade %}Budget of Work — {{ grade }}{% else %}Budget of Work{% endif %}
+            </h2>
+            {% if grade and subjects %}
+            <div class="stats-pill">
+                <span class="stat-num">{{ subjects|length }}</span>
+                <span class="stat-label">subjects</span>
+            </div>
+            {% endif %}
+        </div>
+        <p class="muted-text" style="margin-bottom:16px;">
+            {% if grade %}
+                Pick a subject below and download its official DepEd Budget of Work.
+            {% else %}
+                Pick a grade level on the left to load its subjects.
+            {% endif %}
+        </p>
+
+        {% if grade and subjects %}
+        <div class="bow-summary">
+            {{ grade }} · {{ subjects|length }} subject{% if subjects|length != 1 %}s{% endif %} ·
+            {{ grand_total }} competenc{% if grand_total != 1 %}ies{% else %}y{% endif %}
+            across all terms
+        </div>
+
+        <div class="bow-list">
+            <div class="bow-row bow-row-head">
+                <div class="bow-cell-subject">Subject</div>
+                <div class="bow-cell-terms">Terms</div>
+                <div class="bow-cell-file">Official File</div>
+                <div class="bow-cell-action">Download</div>
+            </div>
+            {% for s in subjects %}
+            <div class="bow-row">
+                <div class="bow-cell-subject">
+                    <div class="bow-name">{{ s.name }}</div>
+                    {% if s.grouping %}<div class="bow-group">{{ s.grouping }}</div>{% endif %}
+                </div>
+                <div class="bow-cell-terms">
+                    {% for t in s.terms %}<span class="bow-term">Term {{ t }}</span>{% endfor %}
+                </div>
+                <div class="bow-cell-file">
+                    {% if s.pdf_name %}{{ s.pdf_name }}{% else %}
+                    <span class="bow-no-file">No official PDF</span>{% endif %}
+                    {% if s.extras %}
+                    <div class="bow-file-extra">
+                        {% for x in s.extras %}<span>{{ x.name }}</span>{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="bow-cell-action">
+                    {% if s.pdf_name %}
+                    <div class="bow-dl-stack">
+                        <a class="bow-dl" href="/bow/export/pdf?grade={{ grade }}&subject={{ s.name }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                        </a>
+                        {% for x in s.extras %}
+                        <a class="bow-dl" href="/bow/export/pdf?grade={{ grade }}&subject={{ s.name }}&file={{ x.name }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="bow-alt">
+                        <a href="/bow/export/docx?grade={{ grade }}&subject={{ s.name }}">Word</a>
+                        <a href="/bow/export/csv?grade={{ grade }}&subject={{ s.name }}">CSV</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% elif grade %}
+        <p class="alert alert-error" style="margin-top:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            No Budget of Work found for {{ grade }}.
+        </p>
+        {% else %}
+        <div class="no-data">
+            <p>Select a grade level from the left panel and its Budget of Work will load.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

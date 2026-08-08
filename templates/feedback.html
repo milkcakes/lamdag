@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <h2>Feedback</h2>
+        <a href="/" class="btn-secondary">← Back</a>
+    </div>
+    <p class="field-hint">Your feedback helps improve LAMDAG. It is saved on this device and{% if form_url %} also sent to our Google Form{% else %} can be exported for the developer{% endif %}.</p>
+
+    {% if sent %}
+    <div class="alert alert-success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Salamat! Na-save ang imong feedback.
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="alert alert-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Please give a rating and at least one comment.
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/feedback/submit">
+        <div class="form-row">
+            <div class="form-group" style="margin-bottom:14px;">
+                <label>Rating</label>
+                <div class="star-rating">
+                    <input type="radio" name="rating" value="5" id="star5"><label for="star5" title="5 - Excellent">★</label>
+                    <input type="radio" name="rating" value="4" id="star4"><label for="star4" title="4 - Good">★</label>
+                    <input type="radio" name="rating" value="3" id="star3"><label for="star3" title="3 - Okay">★</label>
+                    <input type="radio" name="rating" value="2" id="star2"><label for="star2" title="2 - Poor">★</label>
+                    <input type="radio" name="rating" value="1" id="star1"><label for="star1" title="1 - Very Poor">★</label>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+                <label for="area">Unsa nga parte sa app ang imong gigamit?</label>
+                <select id="area" name="area">
+                    <option value="">-- Select --</option>
+                    <option value="Dashboard (Home)">Dashboard (Home)</option>
+                    <option value="Step 1 - Basic Info">Step 1 - Basic Info</option>
+                    <option value="Step 2 - Competency">Step 2 - Competency</option>
+                    <option value="Step 3 - Intentions">Step 3 - Intentions</option>
+                    <option value="Step 4 - Experiences">Step 4 - Experiences</option>
+                    <option value="Step 5 - Assessment">Step 5 - Assessment</option>
+                    <option value="Step 6 - Ways Forward">Step 6 - Ways Forward</option>
+                    <option value="Preview / Export (PDF/DOCX)">Preview / Export (PDF/DOCX)</option>
+                    <option value="My Plans">My Plans</option>
+                    <option value="Manage Competencies">Manage Competencies</option>
+                    <option value="Settings">Settings</option>
+                    <option value="Overall">Overall</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+            <label for="liked">Unsa ang nindot / nagana nga maayo?</label>
+            <textarea id="liked" name="liked" rows="2" placeholder="e.g., Sayon ang pagpili og competency, nindot ang template..."></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+            <label for="problem">Unsa ang problema / naglibog ka? <span class="muted-text" style="font-weight:normal;">(iha ang step/part)</span></label>
+            <textarea id="problem" name="problem" rows="2" placeholder="e.g., Sa Step 2, dili nako makita ang akong napili nga week..."></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+            <label for="suggestions">Unsa ang imong sugyot aron ma-improve?</label>
+            <textarea id="suggestions" name="suggestions" rows="2" placeholder="e.g., Palihog pag-add og ..."></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="margin-bottom:14px;">
+                <label for="name">Name <span class="muted-text" style="font-weight:normal;">(optional)</span></label>
+                <input type="text" id="name" name="name" placeholder="e.g., Maria Santos" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+                <label for="email">Email <span class="muted-text" style="font-weight:normal;">(optional, para maka-follow-up mi)</span></label>
+                <input type="email" id="email" name="email" placeholder="e.g., maria@gmail.com" autocomplete="off">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            {% if form_url %}
+            <a class="btn-secondary" href="{{ form_url }}" target="_blank" rel="noopener" style="text-decoration:none;">Open Google Form</a>
+            {% endif %}
+            <button type="submit" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send Feedback</button>
+        </div>
+    </form>
+</div>
+
+<div class="form-container" style="margin-top:20px;">
+    <div class="section-head">
+        <h2 style="font-size:13pt;">Submitted Feedback ({{ feedbacks|length }})</h2>
+        <div style="display:flex; gap:8px;">
+            <a href="/feedback/export" class="btn-small"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</a>
+        </div>
+    </div>
+
+    {% if feedbacks %}
+    <div class="recent-list">
+        {% for f in feedbacks %}
+        <div style="padding:12px 16px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:flex-start;">
+            <div style="flex:1; min-width:0;">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span style="color:var(--gold-2); letter-spacing:2px; font-size:11pt;">{{ '★' * f.rating }}</span>
+                    <span class="row-date" style="flex:none; font-size:8.5pt; color:var(--ink-3);">{{ f.created_at }}</span>
+                    {% if f.area %}<span class="chip">{{ f.area }}</span>{% endif %}
+                    {% if f.name %}<span class="chip">{{ f.name }}{% if f.email %} &lt;{{ f.email }}&gt;{% endif %}</span>{% endif %}
+                    {% if f.synced %}
+                    <span class="chip chip-ok">Sent to Google</span>
+                    {% else %}
+                    <span class="chip chip-warn" title="{{ f.sync_note }}">Local only</span>
+                    {% endif %}
+                </div>
+                {% if f.liked %}<div style="font-size:9.5pt; margin-top:6px;"><strong>Nindot:</strong> {{ f.liked }}</div>{% endif %}
+                {% if f.problem %}<div style="font-size:9.5pt; margin-top:4px; color:var(--danger);"><strong>Problema:</strong> {{ f.problem }}</div>{% endif %}
+                {% if f.suggestions %}<div style="font-size:9.5pt; margin-top:4px; color:var(--ink-2);"><strong>Sugyot:</strong> {{ f.suggestions }}</div>{% endif %}
+            </div>
+            <form method="POST" action="/feedback/delete/{{ f.id }}" onsubmit="return confirm('Delete this feedback entry?')" style="flex-shrink:0;">
+                <button type="submit" class="btn-small" style="color:var(--danger); border-color:var(--danger-line);" title="Delete"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-data"><p>Wala pay feedback nga na-submit.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    {% set current = 6 %}
+    {% include "partials/wizard.html" %}
+    <h2>Step 6: Ways Forward</h2>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="extended_learning">Extended Learning Opportunities</label>
+            <p class="field-hint">Suggest other learning experiences outside the classroom/class hours that reinforce learning, spark curiosity further, or support learners in their areas of difficulty.</p>
+            <textarea id="extended_learning" name="extended_learning" rows="4">{{ extended_learning }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="reflection">Reflections</label>
+            <p class="field-hint">Write your own reflection for the lesson. It is intentionally left blank for you to fill in. What do you need to change for the next session? Is there something learners want to explore? Anything to share with co-teachers, parents, or school leaders?</p>
+            <textarea id="reflection" name="reflection" rows="5">{{ reflection }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="references">References</label>
+            <p class="field-hint">Books, websites, toolkits, etc.</p>
+            <textarea id="references" name="references" rows="3">{{ references }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="ai_declaration">Declaration of AI Use</label>
+            <p class="field-hint">Cite how AI was used in the formulation of the lesson plan.</p>
+            <textarea id="ai_declaration" name="ai_declaration" rows="3">{{ ai_declaration }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/generate/step5" class="btn">← Back</a>
+            <button type="submit" class="btn">Generate Lesson Plan</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

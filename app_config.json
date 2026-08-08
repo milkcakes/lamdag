@@ -1,0 +1,30 @@
+{
+  "term_config": {
+    "school_year": "2026-2027",
+    "terms": {
+      "1": {
+        "start": "2026-06-08",
+        "end": "2026-09-15"
+      },
+      "2": {
+        "start": "2026-09-16",
+        "end": "2026-12-18"
+      },
+      "3": {
+        "start": "2027-01-04",
+        "end": "2027-04-08"
+      }
+    }
+  },
+  "feedback_form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdvU8RX3p_SWJ8NRuV8Ajj2WrxFmC4W0FLWX5zJca2fXeUAYg/viewform",
+  "feedback_response_url": "https://docs.google.com/forms/d/e/1FAIpQLSdvU8RX3p_SWJ8NRuV8Ajj2WrxFmC4W0FLWX5zJca2fXeUAYg/formResponse",
+  "feedback_entries": {
+    "name": "entry.791129720",
+    "email": "entry.297671195",
+    "rating": "entry.1343280523",
+    "area": "entry.710631211",
+    "liked": "entry.105822566",
+    "problem": "entry.343717928",
+    "suggestions": "entry.1394606073"
+  }
+}

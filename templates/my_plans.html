@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>My Lesson Plans</h2>
+        <a href="/" class="btn-secondary">← Back</a>
+    </div>
+
+    <p class="muted-text" style="font-size:10pt; margin-bottom:14px;">
+        Your saved plans — {{ plans|length }} total
+    </p>
+
+    {% if plans %}
+    <div class="table-scroll">
+    <table class="plans-table">
+        <thead>
+            <tr>
+                <th>Plan Name</th>
+                <th>Grade</th>
+                <th>Subject</th>
+                <th>Term/Week</th>
+                <th>Saved</th>
+                <th style="text-align:center;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in plans %}
+        <tr>
+            <td style="font-weight:700;">{{ p.name }}</td>
+            <td>{{ p.grade_level }}</td>
+            <td>{{ p.subject }}</td>
+            <td>T{{ p.term }} W{{ p.week }}</td>
+            <td class="muted-text" style="font-size:9pt;">{{ p.updated_at }}</td>
+            <td style="text-align:center; white-space:nowrap;">
+                <a href="/load/{{ p.id }}" class="btn-small" style="margin-right:4px;">Open</a>
+                <form method="POST" action="/delete/{{ p.id }}" style="display:inline;"
+                      onsubmit="return confirm('Delete this plan?')">
+                    <button type="submit" class="btn-small" style="color:var(--danger); border-color:var(--danger-line);">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="no-data" style="margin-top:24px;">
+        <p>No saved lesson plans yet.</p>
+        <a href="/generate" class="btn" style="margin-top:12px;">Create your first lesson plan</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    {% set current = 1 %}
+    {% include "partials/wizard.html" %}
+    <h2>Step 1: Basic Information</h2>
+
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="school">School Name</label>
+                <input type="text" id="school" name="school" value="{{ data.school or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="teacher">Teacher Name</label>
+                <input type="text" id="teacher" name="teacher" value="{{ data.teacher or '' }}" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="region">Region</label>
+                {% set regions = [
+                    'Region I - Ilocos Region',
+                    'Region II - Cagayan Valley',
+                    'Region III - Central Luzon',
+                    'NCR - National Capital Region',
+                    'Region IV-A - CALABARZON',
+                    'Region IV-B - MIMAROPA',
+                    'Region V - Bicol Region',
+                    'Region VI - Western Visayas',
+                    'Region VII - Central Visayas',
+                    'Region VIII - Eastern Visayas',
+                    'Region IX - Zamboanga Peninsula',
+                    'Region X - Northern Mindanao',
+                    'Region XI - Davao Region',
+                    'Region XII - SOCCSKSARGEN',
+                    'Region XIII - Caraga',
+                    'BARMM - Bangsamoro Autonomous Region in Muslim Mindanao',
+                    'CAR - Cordillera Administrative Region',
+                    'Region XVIII - Negros Island Region',
+                ] %}
+                <select id="region" name="region">
+                    {% for r in regions %}
+                    <option value="{{ r }}" {% if (data.region or 'Region VII - Central Visayas') == r %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="division">Schools Division <span class="muted-text" style="font-weight:normal;">(optional)</span></label>
+                <input type="text" id="division" name="division" value="{{ data.division or '' }}" placeholder="e.g., Cebu City">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="grade_level">Grade Level</label>
+                <select id="grade_level" name="grade_level" required onchange="loadSubjects(); updateTimeOptions()">
+                    <option value="">-- Select --</option>
+                    {% for g in grades %}
+                    <option value="{{ g }}" {% if data.grade_level == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="section">Section <span class="muted-text" style="font-weight:normal;">(optional)</span></label>
+                <input type="text" id="section" name="section" value="{{ data.section or '' }}" placeholder="e.g., A3-Thales">
+            </div>
+            <div class="form-group">
+                <label for="subject">Learning Area / Subject</label>
+                <select id="subject" name="subject" required onchange="subjectTermInfo()">
+                    <option value="">-- Select Grade First --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="term">Term</label>
+                <select id="term" name="term" required onchange="termChanged()">
+                    {% for tr in term_ranges %}
+                    <option value="{{ tr.value }}" {% if data.term == tr.value %}selected{% endif %}>Term {{ tr.value }} ({{ tr.label }})</option>
+                    {% endfor %}
+                </select>
+                <p class="field-hint" id="term_hint"></p>
+            </div>
+            <div class="form-group">
+                <label for="week">BOW Week <span class="muted-text" style="font-weight:normal;">(pacing per term)</span></label>
+                <select id="week" name="week" required>
+                    {% for w in range(1, 16) %}
+                    <option value="{{ w }}" {% if data.week == w|string %}selected{% endif %}>Week {{ w }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" required onchange="dateChanged()">
+                <p class="field-hint" id="date_hint"></p>
+            </div>
+        </div>
+
+        <div class="form-row align-end">
+            <div class="form-group">
+                <label for="time_allotment">Time Allotment</label>
+                <select id="time_allotment" name="time_allotment" onchange="updateTimeOptions()">
+                    <option value="50 mins" selected>50 mins</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="school_week">School Week</label>
+                <select id="school_week" name="school_week" onchange="updateSessionsOptions()">
+                    <option value="5" {% if data.school_week == '5' %}selected{% endif %}>5 days (Mon–Fri)</option>
+                    <option value="6" {% if data.school_week == '6' %}selected{% endif %}>6 days (incl. Saturday)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sessions" title="Optional — auto-filled from Time Allotment">No. of Sessions</label>
+                <select id="sessions" name="sessions">
+                    <option value="">-- Select --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn">Next → Competencies</button>
+        </div>
+    </form>
+</div>
+
+<script>
+const savedSubject = {{ data.subject | tojson }};
+const savedTime = {{ data.time_allotment | tojson }};
+const savedSessions = {{ data.sessions | tojson }};
+const savedSchoolWeek = {{ data.school_week | tojson }};
+
+const timeOptions = {
+    "Kindergarten": [
+        { value: "30 mins", label: "30 mins" },
+        { value: "40 mins", label: "40 mins" },
+    ],
+    "primary": [
+        { value: "40 mins", label: "40 mins" },
+        { value: "50 mins", label: "50 mins" },
+    ],
+    "jhs": [
+        { value: "50 mins", label: "50 mins" },
+        { value: "60 mins", label: "60 mins" },
+    ],
+    "shs": [
+        { value: "60 mins", label: "60 mins (1 hour)" },
+        { value: "90 mins", label: "90 mins (1.5 hours)" },
+        { value: "120 mins", label: "120 mins (2 hours)" },
+    ],
+};
+
+function _band(g) {
+    if (g === "Kindergarten") return "Kindergarten";
+    const m = g.match(/\d+/);
+    if (!m) return null;
+    const n = parseInt(m[0]);
+    if (n >= 1 && n <= 6) return "primary";
+    if (n >= 7 && n <= 10) return "jhs";
+    if (n >= 11 && n <= 12) return "shs";
+    return null;
+}
+
+function updateTimeOptions() {
+    const grade = document.getElementById('grade_level').value;
+    const sel = document.getElementById('time_allotment');
+    sel.innerHTML = '';
+    const band = _band(grade);
+    const opts = timeOptions[band] || [{ value: "50 mins", label: "50 mins" }];
+    let found = false;
+    opts.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        if (o.value === savedTime) { opt.selected = true; found = true; }
+        sel.appendChild(opt);
+    });
+    if (!found && opts.length > 0) {
+        sel.options[0].selected = true;
+    }
+    const sessionsSel = document.getElementById('sessions');
+    if (sessionsSel && !sessionsSel.value) {
+        sessionsSel.value = 'Day 1 of ' + document.getElementById('school_week').value;
+    }
+}
+
+function updateSessionsOptions() {
+    const weekSel = document.getElementById('school_week');
+    const days = parseInt(weekSel.value, 10) || 5;
+    const sel = document.getElementById('sessions');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- Select --</option>';
+    for (let d = 1; d <= days; d++) {
+        const opt = document.createElement('option');
+        opt.value = 'Day ' + d + ' of ' + days;
+        opt.textContent = 'Day ' + d + ' of ' + days;
+        sel.appendChild(opt);
+    }
+    if (savedSessions && [...sel.options].some(o => o.value === savedSessions)) {
+        sel.value = savedSessions;
+    } else if (current && [...sel.options].some(o => o.value === current)) {
+        sel.value = current;
+    } else {
+        sel.value = 'Day 1 of ' + days;
+    }
+}
+
+function loadSubjects() {
+    const grade = document.getElementById('grade_level').value;
+    const sel = document.getElementById('subject');
+    sel.innerHTML = '<option value="">Loading...</option>';
+    fetch('/subjects/' + encodeURIComponent(grade))
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '';
+            (data.groups || [{name: '', subjects: data.subjects}]).forEach(g => {
+                const og = document.createElement('optgroup');
+                og.label = g.name;
+                g.subjects.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    if (s === savedSubject) opt.selected = true;
+                    og.appendChild(opt);
+                });
+                sel.appendChild(og);
+            });
+            subjectTermInfo();
+        });
+}
+
+function subjectTermInfo() {
+    const grade = document.getElementById('grade_level').value;
+    const subj = document.getElementById('subject').value;
+    const hint = document.getElementById('term_hint');
+    const termSel = document.getElementById('term');
+    if (!grade || !subj) { hint.textContent = ''; return; }
+    fetch('/competency_terms/' + encodeURIComponent(grade) + '/' + encodeURIComponent(subj))
+        .then(r => r.json())
+        .then(data => {
+            const terms = (data.terms || []).map(Number);
+            if (terms.length === 0) {
+                hint.textContent = 'No competencies found for this subject in any term.';
+                hint.style.color = '#b02a37';
+            } else {
+                hint.style.color = '';
+                hint.textContent = 'Has competencies in Term ' + terms.join(', ') + '.';
+                const cur = parseInt(termSel.value, 10);
+                if (terms.indexOf(cur) === -1) {
+                    termSel.value = String(terms[0]);
+                    hint.textContent += ' Auto-set to Term ' + terms[0] + ' (no competencies for the selected term).';
+                }
+            }
+            termChanged();
+        })
+        .catch(function () { hint.textContent = ''; });
+}
+
+const TERM_RANGES = {{ term_ranges | tojson }};
+
+function termLabel(value) {
+    const t = TERM_RANGES.find(x => x.value === value);
+    return t ? t.label : '';
+}
+
+function termChanged() {
+    const termSel = document.getElementById('term');
+    const hint = document.getElementById('date_hint');
+    const d = document.getElementById('date').value;
+    const label = termLabel(termSel.value);
+    hint.textContent = label
+        ? (d ? 'Term ' + termSel.value + ': ' + label + ' (check date vs. term above)' : 'Official dates: ' + label)
+        : '';
+}
+
+function dateChanged() {
+    const d = document.getElementById('date').value;
+    const termSel = document.getElementById('term');
+    const hint = document.getElementById('date_hint');
+    if (!d) { termChanged(); return; }
+    let found = null;
+    for (const t of TERM_RANGES) {
+        if (d >= t.start && d <= t.end) { found = t; break; }
+    }
+    if (found) {
+        termSel.value = found.value;
+        hint.textContent = 'Term ' + found.value + ' auto-set (' + found.label + ')';
+    } else {
+        const first = TERM_RANGES[0];
+        const last = TERM_RANGES[TERM_RANGES.length - 1];
+        hint.textContent = 'Date is outside SY {{ school_year }} term dates ('
+            + first.start + ' – ' + last.end + ')';
+    }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    updateSessionsOptions();
+    if (document.getElementById('grade_level').value) {
+        loadSubjects();
+        updateTimeOptions();
+    }
+    termChanged();
+    dateChanged();
+});
+</script>
+{% endblock %}

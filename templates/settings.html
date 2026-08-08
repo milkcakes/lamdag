@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    <h2>Settings</h2>
+    <p class="field-hint">Configure the school year and official term dates used across the app (Step 1 date checks, term dropdowns, and labels).</p>
+
+    {% if saved %}
+    <div class="alert alert-success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Settings saved.
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="alert alert-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="school_year">School Year</label>
+            <input type="text" id="school_year" name="school_year"
+                   value="{{ tc.school_year or '' }}" placeholder="e.g., 2026-2027">
+            <p class="field-hint">Leave blank to auto-derive from the term dates below.</p>
+        </div>
+
+    <fieldset>
+        <legend>Appearance</legend>
+        <div class="form-group" style="margin-bottom:0;">
+            <label for="appearance">Theme</label>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <button type="button" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <p class="field-hint" style="margin:0;">Light <strong>Dawn</strong> or dark <strong>Night</strong> — saved automatically.</p>
+            </div>
+        </div>
+    </fieldset>
+
+    {% for r in ranges %}
+        <fieldset>
+            <legend>Term {{ r.value }} <span class="muted-text" style="font-weight:normal;">(currently {{ r.label }})</span></legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="term{{ r.value }}_start">Start Date</label>
+                    <input type="date" id="term{{ r.value }}_start" name="term{{ r.value }}_start"
+                           value="{{ r.start }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="term{{ r.value }}_end">End Date</label>
+                    <input type="date" id="term{{ r.value }}_end" name="term{{ r.value }}_end"
+                           value="{{ r.end }}" required>
+                </div>
+            </div>
+        </fieldset>
+    {% endfor %}
+
+        <fieldset>
+            <legend>Feedback / Google Form <span class="muted-text" style="font-weight:normal;">(optional)</span></legend>
+            <p class="field-hint">Hybrid mode: feedback is always saved locally. It will also be sent to your Google Form automatically if you set these up. <a href="https://docs.google.com/forms" target="_blank" rel="noopener">Create a Google Form</a>, then find its ID and field entry IDs.</p>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label for="feedback_form_url">Google Form link (open button)</label>
+                <input type="text" id="feedback_form_url" name="feedback_form_url"
+                       value="{{ feedback_form_url }}"
+                       placeholder="https://docs.google.com/forms/d/e/FORM_ID/viewform">
+                <p class="field-hint">Shown as an "Open Google Form" button on the Feedback page.</p>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label for="feedback_response_url">Google Form response URL (auto-submit)</label>
+                <input type="text" id="feedback_response_url" name="feedback_response_url"
+                       value="{{ feedback_response_url }}"
+                       placeholder="https://docs.google.com/forms/d/e/FORM_ID/formResponse">
+                <p class="field-hint">Use the <em>formResponse</em> URL (replace <em>viewform</em>). Enables automatic submission when a teacher sends feedback.</p>
+            </div>
+            <div class="form-group">
+                <label for="feedback_entries">Field mapping (JSON)</label>
+                <textarea id="feedback_entries" name="feedback_entries" rows="4"
+                          placeholder='{"liked": "entry.1111111111", "problem": "entry.2222222222", "suggestions": "entry.3333333333", "name": "entry.4444444444", "rating": "entry.5555555555"}'>{{
+feedback_entries_json }}</textarea>
+                <p class="field-hint">Map each feedback field to your Google Form's entry ID. Entry IDs appear in the form's source code (look for <em>name="entry.XXXXXXXXX"</em>).</p>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Settings</button>
+            <a href="/" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

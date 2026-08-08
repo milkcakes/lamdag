@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAMDAG</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script>
+        (function() {
+            var t = localStorage.getItem('lamdag-theme');
+            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+</head>
+<body>
+    {% set current_path = request.path %}
+    <nav>
+        <div class="nav-inner">
+            <a href="/" class="brand" title="LAMDAG — Home">
+                <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="lgInk" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#332b23"/>
+                            <stop offset="1" stop-color="#171310"/>
+                        </linearGradient>
+                        <linearGradient id="lgGold" x1="0" y1="1" x2="0" y2="0">
+                            <stop offset="0" stop-color="#b98a2e"/>
+                            <stop offset="1" stop-color="#e3b75e"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="48" height="48" rx="11" fill="url(#lgInk)"/>
+                    <circle cx="33" cy="15" r="17" fill="rgba(227,183,94,0.16)"/>
+                    <rect x="12.5" y="9.5" width="5.5" height="25" rx="2.75" fill="url(#lgGold)"/>
+                    <rect x="12.5" y="29" width="24" height="5.5" rx="2.75" fill="url(#lgGold)"/>
+                    <circle cx="32.5" cy="17.5" r="5" fill="#e8c578"/>
+                    <line x1="32.5" y1="7.5" x2="32.5" y2="10" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="23.8" y1="13" x2="25.8" y2="14.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="41.2" y1="13" x2="39.2" y2="14.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="28.3" y1="9.6" x2="29.9" y2="11.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="36.7" y1="9.6" x2="35.1" y2="11.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span class="brand-text">
+                    <span class="brand-name">LAMDAG</span>
+                    <span class="brand-tag">Lesson Planner</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/my-plans" title="My Lesson Plans" {% if current_path == '/my-plans' %}class="active"{% endif %}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    My Plans
+                </a>
+                <a href="/manage" title="Competency Manager" {% if current_path == '/manage' or current_path.startswith('/manage') %}class="active"{% endif %}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                    Manage
+                </a>
+                <a href="/update" title="Update Center" {% if current_path == '/update' %}class="active"{% endif %}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Update
+                </a>
+                <a href="/feedback" title="Feedback" {% if current_path == '/feedback' %}class="active"{% endif %}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
+                    Feedback
+                </a>
+                <a href="/settings" title="Settings" {% if current_path == '/settings' %}class="active"{% endif %}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Settings
+                </a>
+                <button type="button" class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark mode" aria-label="Toggle light or dark mode">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <main class="{% block main_class %}{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <script>
+        function toggleTheme() {
+            var html = document.documentElement;
+            var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('lamdag-theme', next);
+        }
+        (function () {
+            var token = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+            document.addEventListener('DOMContentLoaded', function () {
+                var inputs = document.querySelectorAll('form');
+                for (var i = 0; i < inputs.length; i++) {
+                    var f = inputs[i];
+                    if (f.querySelector('input[name="csrf_token"]')) continue;
+                    var h = document.createElement('input');
+                    h.type = 'hidden';
+                    h.name = 'csrf_token';
+                    h.value = token;
+                    f.appendChild(h);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

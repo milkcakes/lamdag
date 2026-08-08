@@ -1,0 +1,13 @@
+.venv
+__pycache__
+*.pyc
+.git
+.vscode
+build
+dist
+gtk_runtime
+database/backups
+session_files
+error.log
+*.pem
+export

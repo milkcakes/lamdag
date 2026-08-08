@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="preview-container">
+    <h2>Lesson Plan Preview</h2>
+
+    <div class="export-actions">
+        <a href="/export/docx" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Lesson Plan .docx</a>
+        <a href="/export/pdf" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Lesson Plan .pdf</a>
+        <span class="export-sep"></span>
+        <a href="/export/exemplar-pdf" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Exemplar .pdf</a>
+        <button onclick="window.print()" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+        <button onclick="copyAsText()" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy as Text</button>
+        <button onclick="togglePreview()" class="btn" id="toggleBtn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span id="toggleLabel">Hide Preview</span></button>
+        {% if session.get('_loaded_plan_id') %}
+        <button onclick="savePlan('update')" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Update "{{ session.get('_loaded_plan_name') or 'Plan' }}"</button>
+        <button onclick="savePlan('new')" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save as New</button>
+        <button onclick="deletePlan()" class="btn btn-danger"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete</button>
+        {% else %}
+        <button onclick="savePlan('new')" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save</button>
+        {% endif %}
+        <a href="/" class="btn">New Lesson Plan</a>
+    </div>
+
+    <details class="back-edit-panel">
+        <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Back to Edit</summary>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
+            <a href="/generate" class="btn-small">Step 1: Basic Info</a>
+            <a href="/generate/step2" class="btn-small">Step 2: Competency</a>
+            <a href="/generate/step3" class="btn-small">Step 3: Intentions</a>
+            <a href="/generate/step4" class="btn-small">Step 4: Experiences</a>
+            <a href="/generate/step5" class="btn-small">Step 5: Assessment</a>
+            <a href="/generate/step6" class="btn-small">Step 6: Ways Forward</a>
+        </div>
+    </details>
+
+    <div class="view-switch" role="tablist">
+        <button type="button" class="active" data-view="plan" onclick="showView('plan')">Lesson Plan</button>
+        <button type="button" data-view="exemplar" onclick="showView('exemplar')">Learning Exemplar</button>
+    </div>
+
+    {% include "partials/plan_document.html" %}
+
+    <div id="previewExemplar" style="display:none;">
+        {% include "partials/exemplar_document.html" %}
+    </div>
+
+    <div class="sig-panel">
+        <h3>Review &amp; Signature Information</h3>
+        <form method="POST" action="/preview/update_signature">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="designation">Designation (Prepared by)</label>
+                    <input type="text" id="designation" name="designation" value="{{ data.designation or '' }}" placeholder="e.g., Teacher I">
+                </div>
+                <div class="form-group">
+                    <label for="school_head">Reviewed &amp; Checked by</label>
+                    <input type="text" id="school_head" name="school_head" value="{{ data.school_head or '' }}" placeholder="Name of reviewer / school head">
+                </div>
+                <div class="form-group">
+                    <label for="school_head_designation">Reviewer Designation</label>
+                    <input type="text" id="school_head_designation" name="school_head_designation" value="{{ data.school_head_designation or '' }}" placeholder="e.g., Master Teacher I / School Head">
+                </div>
+            </div>
+            <button type="submit" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Signature Info</button>
+        </form>
+    </div>
+
+    <details class="back-edit-panel le-details">
+        <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Learning Exemplar Details</summary>
+        <p class="field-hint">Add the optional sections of the official Strengthened SHS Lesson Exemplar (Sections III, IV, and V). Anything you leave blank falls back to the lesson plan data automatically. Changes apply immediately to the preview and to the downloaded files.</p>
+        <form method="POST" action="/exemplar/update">
+            <fieldset>
+                <legend>Objectives &amp; Content</legend>
+                <div class="form-group">
+                    <label for="le_competencies">Learning Competencies (Section I-C)</label>
+                    <div class="field-hint">Learning Competencies from the curriculum, one per line. Leave blank to use the competency selected in Step 2.</div>
+                    <textarea id="le_competencies" name="le_competencies" rows="4">{{ data.le_competencies_raw or '' }}</textarea>
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="le_content">Content (Section III)</label>
+                    <div class="field-hint">A brief summary of the lesson content. Leave blank to use the lesson title/topic.</div>
+                    <textarea id="le_content" name="le_content" rows="3">{{ data.le_content_raw or '' }}</textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Procedures &amp; Annotations (Section IV)</legend>
+                <p class="field-hint">Each step shows the activity content (PROCEDURES column) and its pedagogical note (ANNOTATIONS column). Steps with no lesson-plan source can be typed here.</p>
+                {% for phase in data.le_phases %}
+                <h4 style="margin:14px 0 8px; color:var(--ink-2);">{{ phase.name }}</h4>
+                {% for step in phase.steps %}
+                <div class="form-group" style="margin-top:12px;">
+                    <label>{{ loop.index }}. {{ step.title }}</label>
+                    {% if step.content_editable %}
+                    <div class="field-hint">Describe the activity for this procedure step: instructions, task, or guiding questions.</div>
+                    <textarea name="{{ step.content_key }}" rows="3" placeholder="Activity content for this step...">{{ data[step.content_key] or '' }}</textarea>
+                    {% else %}
+                    <div class="field-hint">Activity content comes from your lesson plan (Step 4: Experiences).</div>
+                    {% endif %}
+                    <div class="field-hint" style="margin-top:6px;">Annotation (pedagogical note, shown in the ANNOTATIONS column):</div>
+                    <textarea name="{{ step.annotation_key }}" rows="2" placeholder="Rationale / annotation for this step...">{{ data[step.annotation_key] or '' }}</textarea>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </fieldset>
+
+            <fieldset>
+                <legend>Assessment (Section V)</legend>
+                <div class="form-group">
+                    <label for="le_quiz">A. Paper and Pen</label>
+                    <div class="field-hint">Paper-and-pen assessment items, one per line. Include the directions and the items.</div>
+                    <textarea id="le_quiz" name="le_quiz" rows="5">{{ data.le_quiz or '' }}</textarea>
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="le_perf_overview">B. Performance Task</label>
+                    <div class="field-hint">Describe the performance task and the expected output.</div>
+                    <textarea id="le_perf_overview" name="le_perf_overview" rows="3">{{ data.le_perf_overview or '' }}</textarea>
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="le_perf_directions">Directions to the Learners</label>
+                    <div class="field-hint">Step-by-step directions for completing the performance task.</div>
+                    <textarea id="le_perf_directions" name="le_perf_directions" rows="4">{{ data.le_perf_directions or '' }}</textarea>
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="le_perf_rubric">Scoring Rubrics</label>
+                    <div class="field-hint">Criteria, proficiency levels, and scores.</div>
+                    <textarea id="le_perf_rubric" name="le_perf_rubric" rows="4">{{ data.le_perf_rubric or '' }}</textarea>
+                </div>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" class="btn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Exemplar Details</button>
+            </div>
+        </form>
+    </details>
+</div>
+
+<form id="saveForm" method="POST" action="/save" style="display:none;">
+    <input type="text" name="name" id="saveName">
+    <input type="hidden" name="mode" id="saveMode" value="new">
+</form>
+
+<textarea id="planTextSrc" style="display:none;" readonly>
+Republic of the Philippines
+Department of Education
+{{ data.region or 'Region VII - Central Visayas' }}
+{% if data.letterhead_division %}{{ data.letterhead_division }}{% endif %}
+{% if data.letterhead_school %}{{ data.letterhead_school }}{% endif %}
+------------------------------------------------------------
+ILAW LESSON PLAN
+
+Name of Lesson: {{ data.lesson_name or '—' }}
+Learning Area/s: {{ data.subject or '—' }}
+Designed by Teacher/s: {{ data.teacher or '—' }}
+Designed for which Grade Level &amp; Section: {{ data.grade_section or data.grade_level or '—' }}
+No. of Sessions: {{ data.sessions or '—' }}
+Date of Lesson Delivery: {{ data.date or '—' }}
+
+References:
+{{ data.references or '—' }}
+
+Declaration of AI use:
+{{ data.ai_declaration or '—' }}
+
+===== INTENTIONS =====
+
+Learning Competency:
+{{ data.competency_full or '—' }}
+
+Learning Objectives:
+{{ data.objectives or '—' }}
+
+Learner Context:
+{{ data.learner_context or '—' }}
+
+===== LEARNING EXPERIENCE =====
+
+Pre-lesson:
+{{ data.pre_lesson or '—' }}
+
+Flow:
+
+I — INTRODUCE{% if data.flow_times and data.flow_times.introduce %} ({{ data.flow_times.introduce }} min){% endif %}
+{{ data.flow_introduce or '—' }}
+
+L — LEARN{% if data.flow_times and data.flow_times.learn %} ({{ data.flow_times.learn }} min){% endif %}
+{{ data.flow_learn or '—' }}
+
+A — APPLY{% if data.flow_times and data.flow_times.apply %} ({{ data.flow_times.apply }} min){% endif %}
+{{ data.flow_apply or '—' }}
+
+W — WRAP-UP{% if data.flow_times and data.flow_times.wrap %} ({{ data.flow_times.wrap }} min){% endif %}
+{{ data.flow_wrapup or '—' }}
+
+Learning Resources:
+{{ data.learning_resources or '—' }}
+
+Opportunities for integration:
+{{ data.integration or 'N/A' }}
+
+===== ASSESSMENT =====
+
+Formative Assessment:
+{{ data.formative_assessment or '—' }}
+
+===== WAYS FORWARD =====
+
+Extended learning opportunities:
+{{ data.extended_learning or '—' }}
+
+Reflections:
+{{ data.reflection or '—' }}
+
+
+Prepared by: {{ data.teacher or '' }}
+    {{ data.designation or 'Teacher' }}
+Reviewed & Checked by: {{ data.school_head or '' }}
+    {{ data.school_head_designation or 'School Head / Principal' }}
+</textarea>
+
+<textarea id="exemplarTextSrc" style="display:none;" readonly>
+Republic of the Philippines
+Department of Education
+{{ data.region or 'Region VII - Central Visayas' }}
+{% if data.letterhead_division %}{{ data.letterhead_division }}{% endif %}
+{% if data.letterhead_school %}{{ data.letterhead_school }}{% endif %}
+------------------------------------------------------------
+LESSON EXEMPLAR
+
+Lesson Title/Topic: {{ data.lesson_name or '—' }}
+{% if data.school_year %}School Year {{ data.school_year }}{% endif %}
+
+Learning Area/s: {{ data.subject or '—' }}
+Grade Level &amp; Section: {{ data.grade_section or data.grade_level or '—' }}
+Quarter: {{ data.quarter or '—' }}
+Week: {{ data.week or '—' }}
+School Year: {{ data.school_year or '—' }}
+Designed by Teacher/s: {{ data.teacher or '—' }}
+
+===== I. OBJECTIVES =====
+
+A. Content Standard:
+{{ data.content_standard or '—' }}
+
+B. Performance Standard:
+{{ data.performance_standard or '—' }}
+
+C. Learning Competencies:
+{{ data.le_competencies_text or '—' }}
+
+===== II. REFERENCES and MATERIALS =====
+
+References:
+{{ data.references or '—' }}
+
+Materials:
+{{ data.learning_resources or '—' }}
+
+===== III. CONTENT =====
+
+{{ data.le_content or '—' }}
+
+===== IV. OBJECTIVES =====
+
+{{ data.le_objectives_intro }}
+{% for obj in data.le_objectives %}{{ loop.index }}. {{ obj }}
+{% else %}—
+{% endfor %}
+===== IV. PROCEDURES =====
+
+{% for phase in data.le_phases %}
+{{ phase.name }}
+{% for step in phase.steps %}
+{{ loop.index }}. {{ step.title }}
+{{ step.content or '—' }}
+Annotation: {{ step.annotation or '—' }}
+
+{% endfor %}
+{% endfor %}
+===== V. ASSESSMENT =====
+
+A. Paper and Pen:
+{{ data.le_quiz or '—' }}
+
+B. Performance Task:
+{{ data.le_perf_overview or '—' }}
+
+Directions to the Learners:
+{{ data.le_perf_directions or '—' }}
+
+Scoring Rubrics:
+{{ data.le_perf_rubric or '—' }}
+
+===== VI. REFLECTION =====
+
+{{ data.reflection_directions }}
+
+Reflection:
+{{ data.reflection or '—' }}
+
+===== VII. USE OF GENERATIVE AI =====
+
+{{ data.le_ai_declaration or '—' }}
+
+
+Prepared by: {{ data.teacher or '' }}
+    {{ data.designation or 'Teacher' }}
+Reviewed &amp; Checked by: {{ data.school_head or '' }}
+    {{ data.school_head_designation or 'School Head / Principal' }}
+</textarea>
+
+<script>
+let activeView = 'plan';
+
+function showView(name) {
+    activeView = name;
+    document.getElementById('previewDoc').style.display = (name === 'plan') ? 'block' : 'none';
+    document.getElementById('previewExemplar').style.display = (name === 'exemplar') ? 'block' : 'none';
+    document.querySelectorAll('.view-switch button').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.view === name);
+    });
+    const btn = document.getElementById('toggleBtn');
+    if (btn) {
+        const doc = document.getElementById(name === 'plan' ? 'previewDoc' : 'previewExemplar');
+        const label = document.getElementById('toggleLabel');
+        if (doc.style.display === 'none') {
+            label.textContent = 'Show Preview';
+        } else {
+            label.textContent = 'Hide Preview';
+        }
+    }
+}
+
+function togglePreview() {
+    const doc = document.getElementById(activeView === 'plan' ? 'previewDoc' : 'previewExemplar');
+    const btn = document.getElementById('toggleBtn');
+    const label = document.getElementById('toggleLabel');
+    if (doc.style.display === 'none') {
+        doc.style.display = 'block';
+        label.textContent = 'Hide Preview';
+    } else {
+        doc.style.display = 'none';
+        label.textContent = 'Show Preview';
+    }
+}
+
+function copyAsText() {
+    const src = document.getElementById(activeView === 'plan' ? 'planTextSrc' : 'exemplarTextSrc');
+    const text = src.value.replace(/\n{3,}/g, '\n\n').trim();
+    navigator.clipboard.writeText(text).then(() => {
+        alert((activeView === 'plan' ? 'Lesson plan' : 'Learning exemplar') + ' copied to clipboard!');
+    }).catch(() => {
+        // Fallback for older browsers / non-secure contexts
+        src.style.display = 'block';
+        src.select();
+        try {
+            document.execCommand('copy');
+            alert((activeView === 'plan' ? 'Lesson plan' : 'Learning exemplar') + ' copied to clipboard!');
+        } catch (e) {
+            alert('Copy failed — select the text and press Ctrl+C.');
+        }
+        src.style.display = 'none';
+    });
+}
+
+function savePlan(mode) {
+    const loadedName = {{ (session.get('_loaded_plan_name') or '') | tojson }};
+    const defaultName = (mode === 'update' && loadedName)
+        ? loadedName
+        : '{{ data.grade_level }} - {{ data.subject }} - W{{ data.week }}';
+    const name = prompt('Enter a name for this lesson plan:', defaultName);
+    if (name !== null) {
+        document.getElementById('saveName').value = name;
+        document.getElementById('saveMode').value = mode || 'new';
+        document.getElementById('saveForm').submit();
+    }
+}
+
+function deletePlan() {
+    const planId = {{ session.get('_loaded_plan_id') or 0 }};
+    const planName = {{ (session.get('_loaded_plan_name') or 'this plan') | tojson }};
+    if (planId && confirm('Delete "' + planName + '"? This cannot be undone.')) {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = '/delete/' + planId;
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        if (tokenMeta) {
+            const h = document.createElement('input');
+            h.type = 'hidden';
+            h.name = 'csrf_token';
+            h.value = tokenMeta.content;
+            f.appendChild(h);
+        }
+        document.body.appendChild(f);
+        f.submit();
+    }
+}
+</script>
+{% endblock %}

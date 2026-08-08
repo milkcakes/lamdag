@@ -1,0 +1,18 @@
+{% set wizard_labels = {1: 'Basic Info', 2: 'Competency', 3: 'Intentions', 4: 'Experiences', 5: 'Assessment', 6: 'Ways Forward'} %}
+{% set wizard_urls = {1: '/generate', 2: '/generate/step2', 3: '/generate/step3', 4: '/generate/step4', 5: '/generate/step5', 6: '/generate/step6'} %}
+<div class="wizard">
+    {% for i in range(1, 7) %}
+    {% if i < current %}
+    <a href="{{ wizard_urls[i] }}" class="wizard-step done" title="Back to {{ wizard_labels[i] }}">
+    {% else %}
+    <div class="wizard-step {% if i == current %}active{% endif %}">
+    {% endif %}
+        <div class="wizard-num">{% if i < current %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{% else %}{{ i }}{% endif %}</div>
+        <div class="wizard-label">{{ wizard_labels[i] }}</div>
+    {% if i < current %}
+    </a>
+    {% else %}
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>

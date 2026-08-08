@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="max-width:1100px;">
+    <div class="manage-head">
+        <h2>Competency Manager</h2>
+        {% if grade and subject %}
+        <div class="stats-pill">
+            <span class="stat-num">{{ total }}</span>
+            <span class="stat-label">competencies</span>
+        </div>
+        {% endif %}
+    </div>
+    <p class="muted-text" style="margin-bottom:16px;">
+        Add, edit, or delete competencies directly in the database. Changes apply immediately to lesson plan generation.
+    </p>
+
+    <form method="GET" action="/manage" class="filter-box">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="grade">Grade Level</label>
+                <select id="grade" name="grade" onchange="loadManageSubjects()">
+                    <option value="">-- Select --</option>
+                    {% for g in grades %}
+                    <option value="{{ g }}" {% if grade == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="subject">Subject</label>
+                <select id="subject" name="subject" onchange="this.form.submit()">
+                    {% if grade %}
+                    <option value="{{ subject }}">{{ subject or '-- Select Subject --' }}</option>
+                    {% else %}
+                    <option value="">-- Select Grade First --</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="term">Term</label>
+                <select id="term" name="term">
+                    <option value="1" {% if term == "1" %}selected{% endif %}>Term 1</option>
+                    <option value="2" {% if term == "2" %}selected{% endif %}>Term 2</option>
+                    <option value="3" {% if term == "3" %}selected{% endif %}>Term 3</option>
+                </select>
+            </div>
+            {% if grade and subject %}
+            <div class="form-group">
+                <label for="week">Week</label>
+                <select id="week" name="week">
+                    <option value="">All Weeks</option>
+                    {% for w in weeks %}
+                    <option value="{{ w }}" {% if week == w %}selected{% endif %}>Week {{ w }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="form-group" style="flex:2;">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search code or description...">
+            </div>
+            <div class="form-group" style="align-self:flex-end;">
+                <button type="submit" class="btn">Apply</button>
+                {% if grade and subject %}
+                <a href="/manage/export?grade={{ grade }}&subject={{ subject }}&term={{ term }}" class="btn-secondary" style="text-align:center;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    {% if grade and subject %}
+    <div class="action-buttons">
+        <details class="panel-box panel-green add-panel">
+            <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add One Competency</summary>
+            <form method="POST" action="/manage/add" style="margin-top:12px;">
+                <input type="hidden" name="grade" value="{{ grade }}">
+                <input type="hidden" name="subject" value="{{ subject }}">
+                <input type="hidden" name="term" value="{{ term }}">
+                <div class="form-row">
+                    <div class="form-group" style="max-width:90px;">
+                        <label for="week">Week</label>
+                        <input type="number" id="week" name="week" min="0" max="15" value="1" required>
+                    </div>
+                    <div class="form-group" style="max-width:140px;">
+                        <label for="code">Code</label>
+                        <input type="text" id="code" name="code" placeholder="e.g., MB-7" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="content_standard">Content Standard</label>
+                    <textarea id="content_standard" name="content_standard" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="performance_standard">Performance Standard</label>
+                    <textarea id="performance_standard" name="performance_standard" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Save Competency</button>
+            </form>
+        </details>
+
+        <details class="panel-box panel-indigo batch-panel">
+            <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>Batch Add (paste many)</summary>
+            {% if request.args.get('added') is not none %}
+            <p class="alert alert-success" style="margin-top:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Added {{ request.args.get('added') }} competencies.
+                {% if request.args.get('skipped')|int > 0 %}
+                Skipped {{ request.args.get('skipped') }} lines (need a code and a description).
+                {% endif %}
+            </p>
+            {% endif %}
+            <p class="muted-text" style="font-size:9pt; margin-top:6px;">
+                One competency per line: <code>week | code | description</code> — or just <code>code | description</code> (uses the default week below).
+                You can also paste directly from Excel (columns: week, code, description).
+            </p>
+            <form method="POST" action="/manage/batch" style="margin-top:12px;">
+                <input type="hidden" name="grade" value="{{ grade }}">
+                <input type="hidden" name="subject" value="{{ subject }}">
+                <input type="hidden" name="term" value="{{ term }}">
+                <div class="form-row">
+                    <div class="form-group" style="max-width:140px;">
+                        <label for="default_week">Default Week</label>
+                        <input type="number" id="default_week" name="default_week" min="0" max="15" value="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="lines">Lines (one competency per line)</label>
+                    <textarea id="lines" name="lines" rows="6" placeholder="1 | M1-1 | Identifies numbers up to 100&#10;1 | M1-2 | Counts objects by ones and tens&#10;2 | M1-3 | Reads and writes numbers in symbols"></textarea>
+                </div>
+                <button type="submit" class="btn">Add All</button>
+            </form>
+        </details>
+
+        <details class="panel-box panel-blue import-panel">
+            <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import from CSV</summary>
+            <p class="muted-text" style="font-size:9pt; margin-top:6px;">
+                CSV columns: <code>week, code, description, content_standard, performance_standard</code> (first two required). Supports files exported from this page.
+            </p>
+            <form method="POST" action="/manage/import" enctype="multipart/form-data" style="margin-top:12px;">
+                <input type="hidden" name="grade" value="{{ grade }}">
+                <input type="hidden" name="subject" value="{{ subject }}">
+                <input type="hidden" name="term" value="{{ term }}">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input type="file" name="file" accept=".csv,.txt" required style="flex:1; min-width:200px;">
+                    <button type="submit" class="btn btn-success">Upload & Import</button>
+                </div>
+            </form>
+        </details>
+    </div>
+    {% endif %}
+
+    {% if competencies %}
+    <div class="result-bar">
+        <span class="muted-text" style="font-size:9.5pt;">
+            Showing {{ competencies|length }} of {{ total }} competenc{% if total != 1 %}ies{% else %}y{% endif %}
+            {% if week %} · Week {{ week }}{% endif %}
+            {% if search %} · matching "{{ search }}"{% endif %}
+        </span>
+        <a href="/manage?grade={{ grade }}&subject={{ subject }}&term={{ term }}" class="edit-link">Clear filters</a>
+    </div>
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:60px;">Week</th>
+                <th style="width:100px;">Code</th>
+                <th>Description</th>
+                <th style="width:110px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in competencies %}
+            <tr>
+                <td style="text-align:center;">{{ c.week if c.week is not none else '' }}</td>
+                <td style="font-weight:600;">{{ c.code }}</td>
+                <td>{{ c.description }}</td>
+                <td style="text-align:center; white-space:nowrap;">
+                    <button class="btn-small" onclick="toggleEdit({{ c.id }})"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit</button>
+                    <form method="POST" action="/manage/delete/{{ c.id }}" style="display:inline;"
+                          onsubmit="return confirm('Delete this competency?');">
+                        <input type="hidden" name="grade" value="{{ grade }}">
+                        <input type="hidden" name="subject" value="{{ subject }}">
+                        <input type="hidden" name="term" value="{{ term }}">
+                        <button type="submit" class="btn-small" style="color:var(--danger); border-color:var(--danger-line);" title="Delete"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </form>
+                </td>
+            </tr>
+            <tr id="editRow{{ c.id }}" style="display:none;">
+                <td colspan="4" class="edit-cell">
+                    <form method="POST" action="/manage/update/{{ c.id }}">
+                        <input type="hidden" name="grade" value="{{ grade }}">
+                        <input type="hidden" name="subject" value="{{ subject }}">
+                        <input type="hidden" name="term" value="{{ term }}">
+                        <div class="form-row">
+                            <div class="form-group" style="max-width:90px;">
+                                <label>Week</label>
+                                <input type="number" name="week" value="{{ c.week if c.week is not none else '' }}" min="0" max="15" required>
+                            </div>
+                            <div class="form-group" style="max-width:140px;">
+                                <label>Code</label>
+                                <input type="text" name="code" value="{{ c.code }}" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" rows="2" required>{{ c.description }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Content Standard</label>
+                            <textarea name="content_standard" rows="2">{{ c.content_standard }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Performance Standard</label>
+                            <textarea name="performance_standard" rows="2">{{ c.performance_standard }}</textarea>
+                        </div>
+                        <button type="submit" class="btn">Save Changes</button>
+                        <button type="button" class="btn-secondary" onclick="toggleEdit({{ c.id }})">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a class="page-btn" href="/manage?grade={{ grade }}&subject={{ subject }}&term={{ term }}&week={{ week }}&search={{ search }}&page={{ page - 1 }}">← Prev</a>
+        {% endif %}
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a class="page-btn" href="/manage?grade={{ grade }}&subject={{ subject }}&term={{ term }}&week={{ week }}&search={{ search }}&page={{ page + 1 }}">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% elif grade and subject %}
+    <p class="alert alert-error" style="margin-top:14px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        No competencies found{% if search %} matching "{{ search }}"{% endif %} for {{ grade }} — {{ subject }} Term {{ term }}.
+    </p>
+    {% else %}
+    <div class="no-data">
+        <p>Select a grade level and subject to view its competencies.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleEdit(id) {
+    const row = document.getElementById('editRow' + id);
+    row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+
+function loadManageSubjects() {
+    const grade = document.getElementById('grade').value;
+    const sel = document.getElementById('subject');
+    sel.innerHTML = '<option value="">Loading...</option>';
+    fetch('/subjects/' + encodeURIComponent(grade))
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">-- Select Subject --</option>';
+            (data.groups || [{name: '', subjects: data.subjects}]).forEach(g => {
+                const og = document.createElement('optgroup');
+                og.label = g.name;
+                g.subjects.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    og.appendChild(opt);
+                });
+                sel.appendChild(og);
+            });
+        });
+}
+</script>
+{% endblock %}

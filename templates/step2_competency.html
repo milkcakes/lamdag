@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    {% set current = 2 %}
+    {% include "partials/wizard.html" %}
+    <h2>Step 2: Select Learning Competency</h2>
+
+    <form method="POST">
+        {% if request.args.get('error') %}
+        <p class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Please select a competency or enter one manually below.
+        </p>
+        {% endif %}
+        {% if by_week %}
+        <p class="muted-text" style="margin-bottom:14px;">
+            Competencies grouped by week. <strong>Week {{ selected_week }}</strong> is open by default as a starting point.
+            You can pick <strong>any</strong> competency from any week — you're not locked to this week.
+        </p>
+        {% for wk, comps in by_week.items() %}
+        <details class="week-group" {% if wk == selected_week %}open{% endif %}>
+            <summary class="week-head">
+                Week {% if wk %}{{ wk }}{% else %}All{% endif %}
+            </summary>
+            <div style="padding:8px 0;">
+                {% for comp in comps %}
+                <div class="competency-card" data-code="{{ comp.code }}" data-desc="{{ comp.description }}" data-cs="{{ comp.content_standard }}" data-ps="{{ comp.performance_standard }}">
+                    <div class="comp-radio">
+                        <input type="radio" name="competency_code" value="{{ comp.code }}">
+                    </div>
+                    <div class="comp-info">
+                        <span class="comp-code">{{ comp.code }}</span> - {{ comp.description }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+        {% endfor %}
+
+        <input type="hidden" name="competency_description" id="competency_description" value="">
+        <input type="hidden" name="content_standard" id="content_standard" value="">
+        <input type="hidden" name="performance_standard" id="performance_standard" value="">
+        {% else %}
+        <p class="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            No competencies found for this subject and term.
+        </p>
+        {% endif %}
+
+        <details class="manual-panel" {% if not by_week %}open{% endif %}>
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                {% if by_week %}Or enter manually{% else %}No competencies found — enter manually{% endif %}
+            </summary>
+            <div style="margin-top:12px;">
+                <div class="form-group">
+                    <label for="manual_code">Competency Code</label>
+                    <input type="text" id="manual_code" name="manual_code" placeholder="e.g., M1-1, OC-3" {% if not by_week %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="manual_description">Competency Description</label>
+                    <textarea id="manual_description" name="manual_description" rows="2" placeholder="Describe the learning competency" {% if not by_week %}required{% endif %}></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="manual_content_standard">Content Standard (optional)</label>
+                    <textarea id="manual_content_standard" name="manual_content_standard" rows="2" placeholder="The learner demonstrates understanding of..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="manual_performance_standard">Performance Standard (optional)</label>
+                    <textarea id="manual_performance_standard" name="manual_performance_standard" rows="2" placeholder="The learner..."></textarea>
+                </div>
+            </div>
+        </details>
+
+        <div class="form-actions">
+            <a href="/generate" class="btn">← Back</a>
+            <button type="submit" class="btn">Next → Intentions</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function selectComp(el) {
+    document.querySelectorAll('.competency-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('input[type="radio"]').checked = true;
+    document.getElementById('competency_description').value = el.dataset.desc;
+    document.getElementById('content_standard').value = el.dataset.cs;
+    document.getElementById('performance_standard').value = el.dataset.ps;
+}
+
+document.querySelectorAll('.competency-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+        selectComp(card);
+    });
+});
+</script>
+{% endblock %}

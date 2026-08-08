@@ -1,0 +1,168 @@
+<div class="preview-doc">
+    <div class="ilaw-letterhead">
+        <div class="ilaw-lh-text">
+            <div class="ilaw-lh-line1">Republic of the Philippines</div>
+            <div class="ilaw-lh-line2">Department of Education</div>
+            <div class="ilaw-lh-line3">{{ data.region or 'Region VII - Central Visayas' }}</div>
+            {% if data.letterhead_division %}<div class="ilaw-lh-line4">{{ data.letterhead_division }}</div>{% endif %}
+            {% if data.letterhead_school %}<div class="ilaw-lh-line5">{{ data.letterhead_school }}</div>{% endif %}
+        </div>
+    </div>
+    <hr class="ilaw-lh-rule">
+    <div class="exemplar-title">LESSON EXEMPLAR</div>
+    <div class="exemplar-subtitle"><strong>Lesson Title/Topic:</strong> {{ data.lesson_name or '—' }}</div>
+    {% if data.school_year %}<div class="exemplar-subtitle">School Year {{ data.school_year }}</div>{% endif %}
+
+    <table class="ilaw-table">
+        <!-- Lesson details -->
+        {% for label, key in [
+            ('Learning Area/s', 'subject'),
+            ('Grade Level & Section', 'grade_section'),
+            ('Quarter', 'quarter'),
+            ('Week', 'week'),
+            ('School Year', 'school_year'),
+            ('Designed by Teacher/s', 'teacher'),
+        ] %}
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">{{ label }}</span></td>
+            <td class="ilaw-value">{{ data[key] or '—' }}</td>
+        </tr>
+        {% endfor %}
+
+        <!-- I. OBJECTIVES -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>I. OBJECTIVES</strong></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">A. Content Standard</span></td>
+            <td class="ilaw-value"><pre>{{ data.content_standard or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">B. Performance Standard</span></td>
+            <td class="ilaw-value"><pre>{{ data.performance_standard or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">C. Learning Competencies</span></td>
+            <td class="ilaw-value"><pre>{{ data.le_competencies_text or '—' }}</pre></td>
+        </tr>
+
+        <!-- II. REFERENCES and MATERIALS -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>II. REFERENCES and MATERIALS</strong></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">References</span></td>
+            <td class="ilaw-value"><pre>{{ data.references or '—' }}</pre> <a href="/generate/step6" class="edit-link">(edit)</a></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">Materials</span></td>
+            <td class="ilaw-value"><pre>{{ data.learning_resources or '—' }}</pre></td>
+        </tr>
+
+        <!-- III. CONTENT -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>III. CONTENT</strong></td>
+        </tr>
+        <tr>
+            <td colspan="2" class="ilaw-value"><pre>{{ data.le_content or '—' }}</pre></td>
+        </tr>
+
+        <!-- IV. OBJECTIVES -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>IV. OBJECTIVES</strong></td>
+        </tr>
+        <tr>
+            <td colspan="2" class="ilaw-value">
+                <p class="le-objectives-intro">{{ data.le_objectives_intro or 'At the end of the lesson, the learners should be able to:' }}</p>
+                {% if data.le_objectives %}
+                <ol class="le-objectives">
+                    {% for obj in data.le_objectives %}<li>{{ obj }}</li>{% endfor %}
+                </ol>
+                {% else %}
+                <p>—</p>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- IV. PROCEDURES (official two-column header) -->
+    <table class="ilaw-table le-proc">
+        <tr class="le-proc-header">
+            <td class="le-col-content"><strong>IV. PROCEDURES</strong></td>
+            <td class="le-col-ann"><strong>ANNOTATIONS</strong></td>
+        </tr>
+        {% for phase in data.le_phases %}
+        {% for step in phase.steps %}
+        <tr>
+            <td class="le-col-content">
+                <p class="le-step-title">{{ loop.index }}. {{ step.title }}</p>
+                <pre>{{ step.content or '—' }}</pre>
+            </td>
+            <td class="le-col-ann">
+                {% if loop.first %}
+                <p class="le-phase-label">{{ phase.name }}</p>
+                {% endif %}
+                {% if step.annotation %}<pre class="le-annotation">{{ step.annotation }}</pre>{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+    </table>
+
+    <table class="ilaw-table">
+        <!-- V. ASSESSMENT -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>V. ASSESSMENT</strong></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">A. Paper and Pen</span></td>
+            <td class="ilaw-value"><pre>{{ data.le_quiz or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">B. Performance Task</span></td>
+            <td class="ilaw-value"><pre>{{ data.le_perf_overview or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">Directions to the Learners</span></td>
+            <td class="ilaw-value"><pre>{{ data.le_perf_directions or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">Scoring Rubrics</span></td>
+            <td class="ilaw-value"><pre>{{ data.le_perf_rubric or '—' }}</pre></td>
+        </tr>
+
+        <!-- VI. REFLECTION -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>VI. REFLECTION</strong></td>
+        </tr>
+        <tr>
+            <td colspan="2" class="ilaw-value">
+                <pre class="le-reflect-dirs">{{ data.reflection_directions }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-field-title">Reflection</span></td>
+            <td class="ilaw-value"><pre>{{ data.reflection or '—' }}</pre></td>
+        </tr>
+
+        <!-- VII. USE OF GENERATIVE AI -->
+        <tr>
+            <td colspan="2" class="ilaw-head ilaw-head-center"><strong>VII. USE OF GENERATIVE AI</strong></td>
+        </tr>
+        <tr>
+            <td colspan="2" class="ilaw-value"><pre>{{ data.le_ai_declaration or '—' }}</pre></td>
+        </tr>
+    </table>
+
+    <table class="preview-signature">
+        <tr><td><strong>Prepared by:</strong></td><td><strong>Reviewed &amp; Checked by:</strong></td></tr>
+        <tr>
+            <td class="ilaw-sig-name">{{ data.teacher if data.teacher else '&nbsp;'|safe }}</td>
+            <td class="ilaw-sig-name">{{ data.school_head if data.school_head else '&nbsp;'|safe }}</td>
+        </tr>
+        <tr>
+            <td>{{ data.designation or 'Teacher' }}</td>
+            <td>{{ data.school_head_designation or 'School Head / Principal' }}</td>
+        </tr>
+    </table>
+</div>

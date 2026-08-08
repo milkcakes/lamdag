@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: lamdag
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: LAMDAG_EXPORT_DIR
+        value: /app/export
+      - key: PORT
+        value: 5000

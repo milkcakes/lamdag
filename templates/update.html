@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    <h2>Update Center</h2>
+    <p style="margin-bottom:16px;" class="muted-text">
+        Update the curriculum database when DepEd releases new competencies.
+        Your existing saved lesson plans will not be affected.
+    </p>
+
+    <form method="POST" action="/do-update" class="update-card-main">
+        <input type="hidden" name="source" value="check">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Check for Updates</h3>
+        <p>
+            {% if update_url %}
+                Fetches from: <code style="word-break:break-all;">{{ update_url }}</code>
+            {% else %}
+                No update URL configured yet. Set one below.
+            {% endif %}
+        </p>
+        <button type="submit" class="btn" {% if update_url %}style="font-size:13pt; padding:13px 38px;"{% else %}disabled{% endif %}><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Check & Update</button>
+    </form>
+
+    <div class="update-card-set">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Set Update URL</h3>
+        <p>
+            Your school coordinator can provide this URL. Once set, just click "Check & Update" above.
+        </p>
+        <form method="POST" action="/save-update-url" style="display:flex; gap:8px;">
+            <input type="text" name="url" placeholder="https://raw.githubusercontent.com/..." value="{{ update_url }}" style="flex:1;">
+            <button type="submit" class="btn btn-success">Save</button>
+        </form>
+    </div>
+
+    <details style="margin-bottom:16px;">
+        <summary class="toggle-link"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Use a different URL (one-time)</summary>
+        <form method="POST" action="/do-update" style="border:1px solid var(--line-strong); border-radius:10px; padding:18px; margin-top:10px; background:var(--surface);">
+            <input type="hidden" name="source" value="url">
+            <div style="display:flex; gap:8px;">
+                <input type="text" name="url" placeholder="https://example.com/curriculum.json" style="flex:1;">
+                <button type="submit" class="btn-secondary">Fetch & Update</button>
+            </div>
+        </form>
+    </details>
+
+    <details>
+        <summary class="toggle-link"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Upload a file instead (offline)</summary>
+        <form method="POST" action="/do-update" enctype="multipart/form-data" style="border:1px solid var(--line-strong); border-radius:10px; padding:18px; margin-top:10px; background:var(--surface);">
+            <input type="hidden" name="source" value="file">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="file" name="file" accept=".json,.csv" required style="flex:1;">
+                <button type="submit" class="btn-secondary">Upload & Update</button>
+            </div>
+        </form>
+    </details>
+</div>
+{% endblock %}

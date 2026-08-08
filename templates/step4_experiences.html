@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    {% set current = 4 %}
+    {% include "partials/wizard.html" %}
+    <h2>Step 4: Learning Experience</h2>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="pre_lesson">Pre-Lesson</label>
+            <p class="field-hint">Describe how you will help the learners get ready for the lesson.</p>
+            <textarea id="pre_lesson" name="pre_lesson" rows="3">{{ pre_lesson }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="flow_introduce">Flow — I: Introduce</label>
+            <p class="field-hint">Make the objective clear for the learners and connect today's new concept to past competencies.</p>
+            <textarea id="flow_introduce" name="flow_introduce" rows="4">{{ flow_introduce }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="flow_learn">Flow — L: Learn</label>
+            <p class="field-hint">Guide learners through the new concept before letting them try the task on their own.</p>
+            <textarea id="flow_learn" name="flow_learn" rows="4">{{ flow_learn }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="flow_apply">Flow — A: Apply</label>
+            <p class="field-hint">Let learners try the task; encourage collaboration and ensure inclusion for varied abilities and contexts.</p>
+            <textarea id="flow_apply" name="flow_apply" rows="4">{{ flow_apply }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="flow_wrapup">Flow — W: Wrap-Up</label>
+            <p class="field-hint">Check learners' well-being, understanding, and mastery; invite them to reflect on why this matters to them.</p>
+            <textarea id="flow_wrapup" name="flow_wrapup" rows="4">{{ flow_wrapup }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="learning_resources">Learning Resources</label>
+            <p class="field-hint">List down the learning resources that will help you reach your objectives.</p>
+            <textarea id="learning_resources" name="learning_resources" rows="4">{{ learning_resources }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/generate/step3" class="btn">← Back</a>
+            <button type="submit" class="btn">Next → Assessment</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

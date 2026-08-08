@@ -1,0 +1,190 @@
+<div class="preview-doc" id="previewDoc">
+    <div class="ilaw-letterhead">
+        <div class="ilaw-lh-text">
+            <div class="ilaw-lh-line1">Republic of the Philippines</div>
+            <div class="ilaw-lh-line2">Department of Education</div>
+            <div class="ilaw-lh-line3">{{ data.region or 'Region VII - Central Visayas' }}</div>
+            {% if data.letterhead_division %}<div class="ilaw-lh-line4">{{ data.letterhead_division }}</div>{% endif %}
+            {% if data.letterhead_school %}<div class="ilaw-lh-line5">{{ data.letterhead_school }}</div>{% endif %}
+        </div>
+    </div>
+    <hr class="ilaw-lh-rule">
+
+    <table class="ilaw-table">
+        <!-- Info rows -->
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">Name of Lesson</span></td>
+            <td class="ilaw-value">{{ data.lesson_name or '—' }} <a href="/generate/step3" class="edit-link">(edit)</a></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">Learning Area/s</span></td>
+            <td class="ilaw-value">{{ data.subject or '—' }}</td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">Designed by Teacher/s</span></td>
+            <td class="ilaw-value">{{ data.teacher or '—' }}</td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">Designed for which Grade Level &amp; Section</span></td>
+            <td class="ilaw-value">{{ data.grade_section or data.grade_level or '—' }}</td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">No. of Sessions</span></td>
+            <td class="ilaw-value">{{ data.sessions or '—' }}</td>
+        </tr>
+        <tr>
+            <td class="ilaw-label"><span class="ilaw-info-label">Date of Lesson Delivery</span></td>
+            <td class="ilaw-value">{{ data.date or '—' }}</td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-info-label">References</span>
+                <div class="ilaw-guide">(books, websites, toolkits, etc.)</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.references or '—' }}</pre> <a href="/generate/step6" class="edit-link">(edit)</a></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-info-label">Declaration of AI use</span>
+                <div class="ilaw-guide">Cite how AI was used in the formulation of the lesson plan.<br>See DO 3 s. 2026 Annex-A</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.ai_declaration or '—' }}</pre></td>
+        </tr>
+
+        <!-- Intentions -->
+        <tr>
+            <td colspan="2" class="ilaw-head">
+                <strong>Intentions:</strong> Meaningful learning experiences are anchored on how we frame them. Start by deciding what you want your learners to master by the end of the lesson &ndash; keep it clear and simple.<br>
+                <em>Remember: understanding your learners&rsquo; evolving contexts and designing around it help ensure that your lessons connect with and are relevant to them.</em>
+                <a href="/generate/step3" class="edit-link">(edit)</a>
+            </td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Learning Competency:</span>
+                <div class="ilaw-guide">Write the competency/ies from the curriculum that we are targeting, and the content or performance standards applicable to the sessions.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.competency_full or '—' }}</pre> <a href="/generate/step2" class="edit-link">(edit)</a></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Learning Objectives:</span>
+                <div class="ilaw-guide">Write the smaller knowledge, skills, or tasks from the competency that the learners will work on and be able to show by the end of the sessions.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.objectives or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Learner Context:</span>
+                <div class="ilaw-guide">Write your observations of your learners, and how they have been performing or responding to learning experiences recently. Include strengths, interest, and possible barriers to learning.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.learner_context or '—' }}</pre></td>
+        </tr>
+
+        <!-- Learning Experience -->
+        <tr>
+            <td colspan="2" class="ilaw-head">
+                <strong>Learning Experience.</strong> A learning experience is like a thoughtfully designed journey. Each activity and interaction build towards meaningful understanding and growth. Identify activities and interactions to help learner gain knowledge, skills, or understanding in a purposeful way.
+                <a href="/generate/step4" class="edit-link">(edit)</a>
+            </td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Pre-lesson:</span>
+                <div class="ilaw-guide">Describe how you will help the learners get ready for the lesson.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.pre_lesson or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Flow:</span>
+                <div class="ilaw-guide">Describe the activities that you can implement in one or more sessions to meet the learning objectives.<br>
+                Apply the Learning Design Principles by thinking about how to:
+                <ul>
+                    <li>make the objective clear for the learners</li>
+                    <li>guide learners before letting them try the task on their own</li>
+                    <li>check the state of learners&rsquo; well-being, understanding, and mastery over the lesson</li>
+                    <li>connect today&rsquo;s new concept to past competencies</li>
+                    <li>encourage collaboration among learners</li>
+                    <li>invite learners to reflect on why these matters to them</li>
+                    <li>ensure inclusion for learner&rsquo;s varied abilities, learning styles, and contexts</li>
+                </ul>
+                </div>
+            </td>
+            <td class="ilaw-value">
+                <p class="ilaw-flow-head">I — INTRODUCE{% if data.flow_times and data.flow_times.introduce %} ({{ data.flow_times.introduce }} min){% endif %}</p>
+                <pre>{{ data.flow_introduce or '—' }}</pre>
+                <p class="ilaw-flow-head">L — LEARN{% if data.flow_times and data.flow_times.learn %} ({{ data.flow_times.learn }} min){% endif %}</p>
+                <pre>{{ data.flow_learn or '—' }}</pre>
+                <p class="ilaw-flow-head">A — APPLY{% if data.flow_times and data.flow_times.apply %} ({{ data.flow_times.apply }} min){% endif %}</p>
+                <pre>{{ data.flow_apply or '—' }}</pre>
+                <p class="ilaw-flow-head">W — WRAP-UP{% if data.flow_times and data.flow_times.wrap %} ({{ data.flow_times.wrap }} min){% endif %}</p>
+                <pre>{{ data.flow_wrapup or '—' }}</pre>
+            </td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Learning Resources:</span>
+                <div class="ilaw-guide">List down the learning resources that will help you reach your objectives. Ensure that they are available and inclusive. Include options and alternatives in case of emergencies.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.learning_resources or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Opportunities for integration:</span>
+                <div class="ilaw-guide">Write down any possibilities to meaningfully integrate another area, special topic or technology. Write N/A if none.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.integration or 'N/A' }}</pre> <a href="/generate/step3" class="edit-link">(edit)</a></td>
+        </tr>
+
+        <!-- Assessment -->
+        <tr>
+            <td colspan="2" class="ilaw-head">
+                <strong>Assessment.</strong> Assessment reveal what learners have gained and what they still need help with. These are helpful in providing you with information to guide your future instruction.
+                <a href="/generate/step5" class="edit-link">(edit)</a>
+            </td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Formative Assessment:</span>
+                <div class="ilaw-guide">Create a task, activity or questions to evaluate learning and provide feedback. Include ways for learners to ask for guidance or support. Remember to provide appropriate accommodation so all learners can demonstrate their understanding (e.g. varied response formats, small group options, visual or auditory support).</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.formative_assessment or '—' }}</pre></td>
+        </tr>
+
+        <!-- Ways Forward -->
+        <tr>
+            <td colspan="2" class="ilaw-head">
+                <strong>Ways forward.</strong> Meaningful learning can also happen beyond the classroom &ndash; for both learner and the teacher.<br>
+                Pause and reflect on what happened today.
+                <a href="/generate/step6" class="edit-link">(edit)</a>
+            </td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Extended learning opportunities:</span>
+                <div class="ilaw-guide">Suggest other learning experiences outside the classroom/class hours that learners may want to access to reinforce what they have learned, to spark their curiosities further, or that may provide them support in their areas of difficulty.</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.extended_learning or '—' }}</pre></td>
+        </tr>
+        <tr>
+            <td class="ilaw-label">
+                <span class="ilaw-field-title">Reflections:</span>
+                <div class="ilaw-guide">Think about what you need to change for the next session based on what happened today. Is there something learners are interested in exploring? Are there some things you would like to share with your co-teachers, parents, school leaders, about your classroom experience? What would you like your instructional coach to help you with?</div>
+            </td>
+            <td class="ilaw-value"><pre>{{ data.reflection or '—' }}</pre></td>
+        </tr>
+    </table>
+
+    <table class="preview-signature">
+        <tr><td><strong>Prepared by:</strong></td><td><strong>Reviewed &amp; Checked by:</strong></td></tr>
+        <tr>
+            <td class="ilaw-sig-name">{{ data.teacher if data.teacher else '&nbsp;'|safe }}</td>
+            <td class="ilaw-sig-name">{{ data.school_head if data.school_head else '&nbsp;'|safe }}</td>
+        </tr>
+        <tr>
+            <td>{{ data.designation or 'Teacher' }}</td>
+            <td>{{ data.school_head_designation or 'School Head / Principal' }}</td>
+        </tr>
+    </table>
+</div>
