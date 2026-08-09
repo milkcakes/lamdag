@@ -257,6 +257,20 @@ def init_database():
             active INTEGER DEFAULT 1,
             notes TEXT DEFAULT ''
         );
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            name TEXT DEFAULT '',
+            school TEXT DEFAULT '',
+            status TEXT DEFAULT 'trial',
+            plan TEXT DEFAULT '',
+            trial_start TEXT DEFAULT '',
+            trial_end TEXT DEFAULT '',
+            paid_until TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            last_login TEXT DEFAULT ''
+        );
     """)
     conn.commit()
     conn.close()

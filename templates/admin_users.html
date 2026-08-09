@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="max-width:1100px;">
+    <div class="manage-head">
+        <h2>User Accounts</h2>
+        <div class="stats-pill">
+            <span class="stat-num">{{ users|length }}</span>
+            <span class="stat-label">users</span>
+        </div>
+    </div>
+    <p class="muted-text" style="margin-bottom:16px;">
+        Accounts start a 14-day free trial automatically. After the teacher pays via GCash,
+        activate their plan here. <strong>Beta</strong> gives full access with no expiry (not admin).
+    </p>
+
+    {% if msg %}
+    <div class="draft-banner" style="margin-bottom:16px;">
+        <div class="draft-banner-info">
+            <div class="draft-banner-title">{{ msg }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="overflow-x:auto;">
+        <table class="data-table" style="width:100%; margin-top:20px;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>School</th>
+                    <th>Status</th>
+                    <th>Plan</th>
+                    <th>Trial ends</th>
+                    <th>Paid until</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.school or '—' }}</td>
+                    <td>
+                        {% if u.status == 'active' %}<span style="color:var(--success,#3a7d44);font-weight:600;">Active</span>
+                        {% elif u.status == 'disabled' %}<span style="color:var(--danger,#a33a2e);font-weight:600;">Disabled</span>
+                        {% else %}<span style="color:var(--gold-deep,#a9791f);font-weight:600;">Trial</span>{% endif %}
+                        {% if u.status == 'active' and u.plan == 'beta' %} · <em>Beta</em>{% endif %}
+                    </td>
+                    <td>{{ u.plan or '—' }}</td>
+                    <td>{{ u.trial_end or '—' }}</td>
+                    <td>{{ u.paid_until or '—' }}</td>
+                    <td>{{ u.created_at }}</td>
+                    <td>
+                        {% if u.status != 'disabled' %}
+                        <form method="POST" action="/admin/users" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="activate_monthly">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small" title="Activate for 1 month">+1 mo</button>
+                        </form>
+                        <form method="POST" action="/admin/users" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="activate_yearly">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small" title="Activate for 1 year">+1 yr</button>
+                        </form>
+                        <form method="POST" action="/admin/users" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="activate_beta">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small" title="Full access, no expiry">Beta</button>
+                        </form>
+                        <form method="POST" action="/admin/users" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="extend_trial">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small" title="Extend trial by 14 days">+14d</button>
+                        </form>
+                        <form method="POST" action="/admin/users" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="disable">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small btn-discard" title="Block access">Disable</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="/admin/users" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="enable">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small">Enable</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="/admin/users" style="display:inline;"
+                              onsubmit="return confirm('Delete this account permanently?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="id" value="{{ u.id }}">
+                            <button type="submit" class="btn-small btn-discard">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="muted-text" style="text-align:center;">No user accounts yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

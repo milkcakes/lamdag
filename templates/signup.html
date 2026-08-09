@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAMDAG — Create Account</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .gate-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .gate-card { width: 100%; max-width: 440px; }
+        .gate-logo { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 2.2rem; }
+        .gate-logo .brand-mark { width: 56px; height: 56px; }
+        .gate-logo .brand-name { font-family: 'Georgia', serif; font-size: 2rem; letter-spacing: 0.12em; }
+        .gate-card h1 { font-family: 'Georgia', serif; font-size: 1.5rem; margin: 0 0 0.6rem; }
+        .gate-card p { color: var(--text-soft, #6b6255); line-height: 1.6; margin: 0 0 1.6rem; }
+        .gate-form { display: flex; flex-direction: column; gap: 0.9rem; }
+        .gate-form input[type="text"], .gate-form input[type="email"], .gate-form input[type="password"] {
+            width: 100%; box-sizing: border-box; padding: 0.85rem 1rem;
+            border: 1px solid rgba(128, 111, 80, 0.35); border-radius: 10px;
+            background: transparent; color: inherit; font-size: 1rem;
+        }
+        .gate-form input:focus { outline: none; border-color: var(--gold, #b98a2e); }
+        .gate-error { color: #b3392e; font-size: 0.9rem; margin: 0; }
+        .gate-sub { font-size: 0.85rem; color: var(--text-soft, #6b6255); margin-top: 1.4rem; line-height: 1.5; }
+        .gate-sub a { color: var(--gold, #b98a2e); font-weight: 700; }
+        .trial-note { display: flex; gap: 0.6rem; align-items: flex-start; background: rgba(185,138,46,0.12); border: 1px solid rgba(185,138,46,0.4); border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 1.2rem; font-size: 0.9rem; line-height: 1.5; color: var(--gold-deep, #a9791f); }
+    </style>
+</head>
+<body>
+    <div class="gate-wrap">
+        <div class="gate-card">
+            <div class="gate-logo">
+                <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="lgInk" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#332b23"/>
+                            <stop offset="1" stop-color="#171310"/>
+                        </linearGradient>
+                        <linearGradient id="lgGold" x1="0" y1="1" x2="0" y2="0">
+                            <stop offset="0" stop-color="#b98a2e"/>
+                            <stop offset="1" stop-color="#e3b75e"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="48" height="48" rx="11" fill="url(#lgInk)"/>
+                    <circle cx="33" cy="15" r="17" fill="rgba(227,183,94,0.16)"/>
+                    <rect x="12.5" y="9.5" width="5.5" height="25" rx="2.75" fill="url(#lgGold)"/>
+                    <rect x="12.5" y="29" width="24" height="5.5" rx="2.75" fill="url(#lgGold)"/>
+                    <circle cx="32.5" cy="17.5" r="5" fill="#e8c578"/>
+                    <line x1="32.5" y1="7.5" x2="32.5" y2="10" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="23.8" y1="13" x2="25.8" y2="14.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="41.2" y1="13" x2="39.2" y2="14.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="28.3" y1="9.6" x2="29.9" y2="11.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                    <line x1="36.7" y1="9.6" x2="35.1" y2="11.6" stroke="#e8c578" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span class="brand-text">
+                    <span class="brand-name">LAMDAG</span>
+                    <span class="brand-tag">Lesson Planner</span>
+                </span>
+            </div>
+            <h1>Create your account</h1>
+            <p>Free for 14 days — no payment needed.</p>
+            <div class="trial-note">
+                <span>✨</span>
+                <span>Your <strong>14-day free trial</strong> starts today. Full access, no credit card required.</span>
+            </div>
+            <form method="POST" action="/signup?next={{ next_path }}" class="gate-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="text" name="name" placeholder="Full name" autocomplete="name" autofocus required>
+                <input type="email" name="email" placeholder="Email address" autocomplete="email" required>
+                <input type="text" name="school" placeholder="School (optional)" autocomplete="organization">
+                <input type="password" name="password" placeholder="Password (at least 6 characters)" autocomplete="new-password" required>
+                <input type="password" name="confirm" placeholder="Repeat password" autocomplete="new-password" required>
+                {% if error %}<p class="gate-error">{{ error }}</p>{% endif %}
+                <button type="submit" class="btn btn-cta">Start my free trial</button>
+            </form>
+            <p class="gate-sub">Already have an account? <a href="/access">Log in →</a></p>
+        </div>
+    </div>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+</body>
+</html>

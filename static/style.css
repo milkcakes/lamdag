@@ -417,6 +417,31 @@ a.nav-school:hover {
     margin: 0 0 4px;
 }
 
+.plan-price {
+    font-family: 'Georgia', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--gold-deep, #a9791f);
+    margin: 8px 0 6px;
+}
+
+.plan-price span {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-soft, #6b6255);
+}
+
+.pay-steps {
+    margin: 0 0 24px;
+    padding-left: 1.2rem;
+    line-height: 1.9;
+    color: var(--text-soft, #6b6255);
+}
+
+.pay-steps strong {
+    color: var(--ink-1, #2b2620);
+}
+
 .donate-thanks {
     border-top: 1px solid var(--line-soft, var(--line-strong));
     padding-top: 18px;

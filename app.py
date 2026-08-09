@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify, Response, abort
 from flask_session import Session
+from werkzeug.security import generate_password_hash, check_password_hash
 import os, json, io, csv, re, secrets, sys
 import urllib.request, urllib.error
 from urllib.parse import urlparse
@@ -116,10 +117,71 @@ def _before_request():
             abort(400, description="Invalid or missing CSRF token")
     if not token:
         session["_csrf_token"] = secrets.token_urlsafe(32)
-    if _access_gate_enabled() and not session.get("_access_granted"):
-        path = request.path
-        if path != "/access" and not path.startswith("/static/"):
-            return redirect(url_for("access", next=path))
+
+    if not _access_gate_enabled():
+        return
+    path = request.path
+    if _is_auth_free(path):
+        return
+    user = _current_user()
+    if user:
+        if _user_has_access(user):
+            return
+        if path != "/subscribe":
+            return redirect(url_for("subscribe"))
+        return
+    if session.get("_access_granted"):
+        return
+    return redirect(url_for("access", next=path))
+
+
+def _is_auth_free(path):
+    return (path in ("/access", "/signup", "/login", "/subscribe", "/favicon.ico")
+            or path.startswith("/static/"))
+
+
+def _current_user():
+    uid = session.get("_user_id")
+    if not uid:
+        return None
+    try:
+        conn = get_connection()
+        row = conn.execute(
+            "SELECT id, email, password_hash, name, school, status, plan, "
+            "trial_start, trial_end, paid_until, created_at, last_login "
+            "FROM users WHERE id = ?", (uid,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return None
+        return {
+            "id": row[0], "email": row[1], "password_hash": row[2], "name": row[3],
+            "school": row[4], "status": row[5], "plan": row[6],
+            "trial_start": row[7], "trial_end": row[8], "paid_until": row[9],
+            "created_at": row[10], "last_login": row[11],
+        }
+    except Exception:
+        return None
+
+
+def _user_has_access(user):
+    if not user or user.get("status") == "disabled":
+        return False
+    today = datetime.now().strftime("%Y-%m-%d")
+    if user["status"] == "trial":
+        return bool(user.get("trial_end")) and user["trial_end"] >= today
+    if user["status"] == "active":
+        if user.get("plan") == "beta":
+            return True
+        return bool(user.get("paid_until")) and user["paid_until"] >= today
+    return False
+
+
+def _has_any_access():
+    if session.get("_access_granted"):
+        return True
+    user = _current_user()
+    return bool(user and _user_has_access(user))
 
 
 def _access_gate_enabled():
@@ -171,26 +233,45 @@ def _lookup_school_code(sent):
 def access():
     if not _access_gate_enabled():
         return redirect(url_for("index"))
-    if session.get("_access_granted"):
+    if _has_any_access():
         return redirect(request.args.get("next") or url_for("index"))
     error = ""
+    tab = "login"
     if request.method == "POST":
-        sent = request.form.get("access_code", "").strip()
-        master = _get_master_code()
-        if master and secrets.compare_digest(sent, master):
-            session["_access_granted"] = True
-            session["_access_admin"] = True
-            session["_access_school"] = "LAMDAG Admin"
-            return redirect(request.args.get("next") or url_for("index"))
-        school = _lookup_school_code(sent)
-        if school:
-            session["_access_granted"] = True
-            session["_access_admin"] = False
-            session["_access_school"] = school["school"]
-            session["_access_plan"] = school["plan"]
-            return redirect(request.args.get("next") or url_for("index"))
-        error = "That access code is not correct. Please try again."
-    return render_template("access.html", error=error,
+        tab = request.form.get("tab", "login")
+        if tab == "code":
+            sent = request.form.get("access_code", "").strip()
+            master = _get_master_code()
+            if master and secrets.compare_digest(sent, master):
+                session["_access_granted"] = True
+                session["_access_admin"] = True
+                session["_access_school"] = "LAMDAG Admin"
+                return redirect(request.args.get("next") or url_for("index"))
+            school = _lookup_school_code(sent)
+            if school:
+                session["_access_granted"] = True
+                session["_access_admin"] = False
+                session["_access_school"] = school["school"]
+                session["_access_plan"] = school["plan"]
+                return redirect(request.args.get("next") or url_for("index"))
+            error = "That access code is not correct. Please try again."
+        else:
+            email = request.form.get("email", "").strip().lower()
+            password = request.form.get("password", "")
+            user = _get_user_by_email(email)
+            if not user or not check_password_hash(user["password_hash"], password):
+                error = "That email or password is not correct."
+            elif user["status"] == "disabled":
+                error = "This account has been disabled."
+            elif not _user_has_access(user):
+                session["_user_id"] = user["id"]
+                _touch_login(user["id"])
+                return redirect(url_for("subscribe"))
+            else:
+                session["_user_id"] = user["id"]
+                _touch_login(user["id"])
+                return redirect(request.args.get("next") or url_for("index"))
+    return render_template("access.html", error=error, tab=tab,
                            next_path=request.args.get("next") or "")
 
 
@@ -198,6 +279,100 @@ def access():
 def access_logout():
     session.pop("_access_granted", None)
     session.pop("_access_admin", None)
+    session.pop("_access_school", None)
+    session.pop("_access_plan", None)
+    session.pop("_user_id", None)
+    return redirect(url_for("access"))
+
+
+def _get_user_by_email(email):
+    try:
+        conn = get_connection()
+        row = conn.execute(
+            "SELECT id, email, password_hash, name, school, status, plan, "
+            "trial_start, trial_end, paid_until, created_at, last_login "
+            "FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return None
+        return {
+            "id": row[0], "email": row[1], "password_hash": row[2], "name": row[3],
+            "school": row[4], "status": row[5], "plan": row[6],
+            "trial_start": row[7], "trial_end": row[8], "paid_until": row[9],
+            "created_at": row[10], "last_login": row[11],
+        }
+    except Exception:
+        return None
+
+
+def _touch_login(uid):
+    try:
+        conn = get_connection()
+        conn.execute("UPDATE users SET last_login = ? WHERE id = ?",
+                     (datetime.now().strftime("%Y-%m-%d %H:%M"), uid))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if not _access_gate_enabled():
+        return redirect(url_for("index"))
+    if _has_any_access():
+        return redirect(request.args.get("next") or url_for("index"))
+    error = ""
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        school = request.form.get("school", "").strip()
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
+        if not name or not email or not password:
+            error = "Please fill in all required fields."
+        elif not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+            error = "Please enter a valid email address."
+        elif len(password) < 6:
+            error = "Password must be at least 6 characters."
+        elif password != confirm:
+            error = "Passwords do not match."
+        elif _get_user_by_email(email):
+            error = "An account with that email already exists. Try logging in instead."
+        else:
+            today = datetime.now()
+            trial_end = today + timedelta(days=14)
+            conn = get_connection()
+            try:
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO users (email, password_hash, name, school, status, plan, "
+                    "trial_start, trial_end, paid_until, created_at) "
+                    "VALUES (?, ?, ?, ?, 'trial', '', ?, ?, '', ?)",
+                    (email, generate_password_hash(password), name, school,
+                     today.strftime("%Y-%m-%d"), trial_end.strftime("%Y-%m-%d"),
+                     today.strftime("%Y-%m-%d %H:%M")),
+                )
+                conn.commit()
+                uid = cur.lastrowid
+            finally:
+                conn.close()
+            session["_user_id"] = uid
+            session.pop("_access_granted", None)
+            session.pop("_access_admin", None)
+            session.pop("_access_school", None)
+            session.pop("_access_plan", None)
+            return redirect(url_for("index"))
+    return render_template("signup.html", error=error,
+                           next_path=request.args.get("next") or "")
+
+
+@app.route("/subscribe")
+def subscribe():
+    user = _current_user()
+    return render_template("subscribe.html", user=user,
+                           gcash_number="09952274754")
     session.pop("_access_school", None)
     session.pop("_access_plan", None)
     return redirect(url_for("access"))
@@ -326,7 +501,10 @@ def _set_update_url(url):
 
 @app.context_processor
 def _inject_globals():
-    return {"school_year": _get_term_config().get("school_year", "")}
+    return {
+        "school_year": _get_term_config().get("school_year", ""),
+        "current_user": _current_user(),
+    }
 
 SUGGESTION_FIELDS = [
     "lesson_name", "objectives", "integration", "learner_context", "pre_lesson",
@@ -1092,6 +1270,75 @@ def _new_access_code():
         conn.close()
         if not exists:
             return code
+
+
+@app.route("/admin/users", methods=["GET", "POST"])
+def admin_users():
+    if not session.get("_access_admin"):
+        return redirect(url_for("index"))
+    msg = ""
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        uid = request.form.get("id", "")
+        conn = get_connection()
+        if action == "activate_monthly":
+            _set_paid_until(conn, uid, days=30)
+            msg = "Account activated for 1 month."
+        elif action == "activate_yearly":
+            _set_paid_until(conn, uid, days=365)
+            msg = "Account activated for 1 year."
+        elif action == "activate_beta":
+            conn.execute(
+                "UPDATE users SET status='active', plan='beta', paid_until='' WHERE id = ?",
+                (uid,),
+            )
+            msg = "Account activated as beta tester (no expiry)."
+        elif action == "extend_trial":
+            trial_end = datetime.now() + timedelta(days=14)
+            conn.execute(
+                "UPDATE users SET status='trial', trial_end=? WHERE id = ?",
+                (trial_end.strftime("%Y-%m-%d"), uid),
+            )
+            msg = "Trial extended by 14 days."
+        elif action == "disable":
+            conn.execute("UPDATE users SET status='disabled' WHERE id = ?", (uid,))
+            msg = "Account disabled."
+        elif action == "enable":
+            trial_end = datetime.now() + timedelta(days=14)
+            conn.execute(
+                "UPDATE users SET status='trial', trial_end=? WHERE id = ?",
+                (trial_end.strftime("%Y-%m-%d"), uid),
+            )
+            msg = "Account re-enabled with a 14-day trial."
+        elif action == "delete":
+            conn.execute("DELETE FROM users WHERE id = ?", (uid,))
+            msg = "Account deleted."
+        conn.commit()
+        conn.close()
+
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT id, email, name, school, status, plan, trial_start, trial_end, "
+        "paid_until, created_at, last_login FROM users ORDER BY id DESC"
+    ).fetchall()
+    conn.close()
+    users = [
+        {
+            "id": r[0], "email": r[1], "name": r[2], "school": r[3],
+            "status": r[4], "plan": r[5], "trial_start": r[6], "trial_end": r[7],
+            "paid_until": r[8], "created_at": r[9], "last_login": r[10],
+        }
+        for r in rows
+    ]
+    return render_template("admin_users.html", users=users, msg=msg)
+
+
+def _set_paid_until(conn, uid, days):
+    end = datetime.now() + timedelta(days=days)
+    conn.execute(
+        "UPDATE users SET status='active', plan='paid', paid_until=? WHERE id = ?",
+        (end.strftime("%Y-%m-%d"), uid),
+    )
 
 
 @app.route("/load/<int:plan_id>")

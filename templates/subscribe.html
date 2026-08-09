@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="max-width:900px;">
+    <div class="manage-head">
+        <h2>Subscribe to LAMDAG</h2>
+    </div>
+
+    {% if user %}
+    <p class="muted-text" style="margin-bottom:16px;">
+        Hi <strong>{{ user.name or user.email }}</strong>, your current plan
+        <strong>
+        {% if user.status == 'trial' %}free trial (ends {{ user.trial_end }}){% else %}{{ user.plan or user.status }}{% endif %}
+        </strong>
+        {% if user.status == 'active' %}runs until {{ user.paid_until }}.{% else %}has ended or is expiring.{% endif %}
+        Choose a plan below to keep using LAMDAG.
+    </p>
+    {% else %}
+    <p class="muted-text" style="margin-bottom:16px;">
+        Your free trial has ended. Choose a plan below to keep using LAMDAG.
+    </p>
+    {% endif %}
+
+    <div class="donate-row">
+        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+            <h3>Teacher Monthly</h3>
+            <p class="plan-price">₱199<span>/month</span></p>
+            <p class="muted-text">Best for trying it out.</p>
+        </div>
+        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+            <h3>Teacher Yearly</h3>
+            <p class="plan-price">₱1,999<span>/year</span></p>
+            <p class="muted-text">2 months free vs. monthly.</p>
+        </div>
+        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+            <h3>School License</h3>
+            <p class="plan-price">₱20,000<span>/year</span></p>
+            <p class="muted-text">All teachers in one school.</p>
+        </div>
+        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+            <h3>Division</h3>
+            <p class="plan-price">₱50,000<span>/year</span></p>
+            <p class="muted-text">Whole division / district.</p>
+        </div>
+    </div>
+
+    <h3 style="font-family:'Georgia',serif; margin:28px 0 12px;">How to pay &amp; activate</h3>
+    <ol class="pay-steps">
+        <li>Choose your plan.</li>
+        <li>Send payment via <strong>GCash {{ gcash_number }}</strong> (or scan any QR below).</li>
+        <li>After paying, <strong>message the LAMDAG administrator</strong> with your email address and the payment reference number.</li>
+        <li>The administrator activates your account — usually within a few hours.</li>
+    </ol>
+
+    <p class="muted-text" style="margin-bottom:16px;"><em>Tap any QR code to make it larger for scanning.</em></p>
+
+    <div class="donate-row">
+        <div class="donate-card">
+            <h3>GCash</h3>
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/GCASH.jpg" alt="GCash QR code" class="qr-img" loading="lazy">
+            </button>
+            <p class="donate-num">{{ gcash_number }}</p>
+            <p class="muted-text">Scan to pay or send to the number above.</p>
+        </div>
+        <div class="donate-card">
+            <h3>GoTyme</h3>
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/GOTYME.jpg" alt="GoTyme QR code" class="qr-img" loading="lazy">
+            </button>
+            <p class="muted-text">Scan with the GoTyme app.</p>
+        </div>
+        <div class="donate-card">
+            <h3>MariBank</h3>
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/MARIBANK.jpg" alt="MariBank QR code" class="qr-img" loading="lazy">
+            </button>
+            <p class="muted-text">Scan with the MariBank app.</p>
+        </div>
+        <div class="donate-card">
+            <h3>UnionBank</h3>
+            <button type="button" class="qr-btn" onclick="openQr(this)">
+                <img src="/static/qr/UNIONBANK.jpg" alt="UnionBank QR code" class="qr-img" loading="lazy">
+            </button>
+            <p class="muted-text">Scan with the UnionBank app.</p>
+        </div>
+    </div>
+
+    <div class="donate-thanks">
+        <p>Salamat kaayo sa imong suporta! <strong>Maraming salamat!</strong></p>
+        <p class="muted-text">Questions? Contact the LAMDAG administrator to activate your account.</p>
+    </div>
+</div>
+
+<div id="qr-lightbox" class="qr-lightbox" onclick="closeQr()" role="dialog" aria-label="QR code enlarged">
+    <img id="qr-lightbox-img" src="" alt="Enlarged QR code">
+    <span class="qr-lightbox-close">×</span>
+</div>
+
+<script>
+    function openQr(btn) {
+        var img = btn.querySelector('img');
+        var lb = document.getElementById('qr-lightbox');
+        var lbi = document.getElementById('qr-lightbox-img');
+        lbi.src = img.src;
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeQr() {
+        var lb = document.getElementById('qr-lightbox');
+        lb.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeQr();
+    });
+</script>
+{% endblock %}
