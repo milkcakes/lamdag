@@ -461,6 +461,37 @@ a.nav-school:hover {
     color: #fff;
 }
 
+.payment-summary {
+    border: 1px solid var(--gold, #b98a2e);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 0 0 18px;
+    background: rgba(185, 138, 46, 0.08);
+    text-align: center;
+}
+
+.payment-summary-title {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold, #b98a2e);
+}
+
+.payment-summary-plan {
+    margin: 0 0 2px;
+    font-family: 'Georgia', serif;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.payment-summary-amount {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+}
+
 .donate-thanks {
     border-top: 1px solid var(--line-soft, var(--line-strong));
     padding-top: 18px;

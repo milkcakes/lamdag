@@ -46,6 +46,11 @@
     </div>
 
     <h3 style="font-family:'Georgia',serif; margin:28px 0 12px; color:#fff;">How to pay &amp; activate</h3>
+    <div id="payment-summary" class="payment-summary" style="display:none;">
+        <p class="payment-summary-title">You selected</p>
+        <p class="payment-summary-plan"><strong id="summary-plan"></strong></p>
+        <p class="payment-summary-amount"><span id="summary-amount"></span> per month</p>
+    </div>
     <ol class="pay-steps">
         <li>Choose your plan.</li>
         <li>Send payment via <strong>GCash {{ gcash_number }}</strong> (or scan any QR below).</li>
@@ -119,8 +124,14 @@
         var cards = document.querySelectorAll('.donate-card.selectable');
         cards.forEach(function (c) { c.classList.remove('selected'); });
         card.classList.add('selected');
-        var steps = document.querySelector('.pay-steps');
-        if (steps) steps.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        var plan = card.getAttribute('data-plan');
+        var amount = card.querySelector('.plan-price').textContent.trim().replace(/\/.*$/, '').trim();
+        document.getElementById('summary-plan').textContent = plan;
+        document.getElementById('summary-amount').textContent = amount;
+        var summary = document.getElementById('payment-summary');
+        summary.style.display = 'block';
+        var target = document.getElementById('payment-summary');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 </script>
 {% endblock %}
