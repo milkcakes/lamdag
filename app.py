@@ -1862,7 +1862,7 @@ def settings():
 
 @app.route("/support")
 def support():
-    return render_template("support.html")
+    return render_template("support.html", gcash_number="09952274754")
 
 
 def _submit_feedback_cloud(name, email, rating, area, liked, problem, suggestions):
