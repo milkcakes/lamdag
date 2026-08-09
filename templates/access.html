@@ -79,8 +79,8 @@
             <p>Sign in to your account, or enter your access code to continue.</p>
 
             <div class="gate-tabs">
-                <button type="button" class="gate-tab {% if tab != 'code' %}active{% endif %}" onclick="switchTab('login')">Log in</button>
-                <button type="button" class="gate-tab {% if tab == 'code' %}active{% endif %}" onclick="switchTab('code')">Access code</button>
+                <button type="button" class="gate-tab {% if tab != 'code' %}active{% endif %}" data-tab="login" onclick="switchTab('login')">Log in</button>
+                <button type="button" class="gate-tab {% if tab == 'code' %}active{% endif %}" data-tab="code" onclick="switchTab('code')">Access code</button>
             </div>
 
             {% if social_available %}
@@ -129,7 +129,7 @@
             document.getElementById('pane-login').classList.toggle('active', name === 'login');
             document.getElementById('pane-code').classList.toggle('active', name === 'code');
             document.querySelectorAll('.gate-tab').forEach(function (b) {
-                b.classList.toggle('active', b.textContent.trim().toLowerCase().replace(' ', '') === name);
+                b.classList.toggle('active', b.getAttribute('data-tab') === name);
             });
         }
     </script>
