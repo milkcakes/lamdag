@@ -10,6 +10,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         You've reached the free trial export limit. Subscribe to keep exporting lesson plans, exemplars, and Budget of Work files.
     </div>
+    {% elif msg == 'trial_used' %}
+    <div class="alert alert-error" style="margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        This device or network has already used its free trial. Please subscribe to continue using LAMDAG.
+    </div>
     {% endif %}
 
     {% if user %}
@@ -32,34 +37,16 @@
             <h3>Teacher Monthly</h3>
             <p class="plan-price">₱199<span>/month</span></p>
             <p class="muted-text">Best for trying it out.</p>
-            {% if paymongo_configured and user %}
-            <form method="POST" action="/checkout/teacher_monthly" style="margin-top:12px;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="btn btn-cta" style="width:100%; padding:0.6rem 0.8rem;">Pay ₱199</button>
-            </form>
-            {% endif %}
         </div>
         <div class="donate-card selectable" data-plan="School License" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>School License</h3>
             <p class="plan-price">₱10,000<span>/month</span></p>
             <p class="muted-text">All teachers in one school.</p>
-            {% if paymongo_configured and user %}
-            <form method="POST" action="/checkout/school_license" style="margin-top:12px;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="btn btn-cta" style="width:100%; padding:0.6rem 0.8rem;">Pay ₱10,000</button>
-            </form>
-            {% endif %}
         </div>
         <div class="donate-card selectable" data-plan="Division" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>Division</h3>
             <p class="plan-price">₱20,000<span>/month</span></p>
             <p class="muted-text">Whole division / district.</p>
-            {% if paymongo_configured and user %}
-            <form method="POST" action="/checkout/division" style="margin-top:12px;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="btn btn-cta" style="width:100%; padding:0.6rem 0.8rem;">Pay ₱20,000</button>
-            </form>
-            {% endif %}
         </div>
     </div>
 
@@ -69,22 +56,14 @@
         <p class="payment-summary-plan"><strong id="summary-plan"></strong></p>
         <p class="payment-summary-amount"><span id="summary-amount"></span> per month</p>
     </div>
-    {% if paymongo_configured %}
-    <ol class="pay-steps">
-        <li>Choose your plan and tap <strong>Pay</strong>.</li>
-        <li>Complete payment securely with GCash, Maya, or GrabPay.</li>
-        <li>Your account is activated <strong>automatically</strong> — no need to message the administrator.</li>
-    </ol>
-    {% else %}
     <ol class="pay-steps">
         <li>Choose your plan.</li>
         <li>Send payment via <strong>GCash {{ gcash_number }}</strong> (or scan any QR below).</li>
-        <li>After paying, <strong>message the LAMDAG administrator</strong> with your email address and the payment reference number.</li>
+        <li>After paying, tap the <strong>Notify the Administrator</strong> button below to message the LAMDAG administrator.</li>
+        <li>Send your email address and a <strong>screenshot</strong> of your payment confirmation in the chat.</li>
         <li>The administrator activates your account — usually within a few hours.</li>
     </ol>
-    {% endif %}
 
-    {% if not paymongo_configured %}
     <p class="muted-text" style="margin-bottom:16px; color:#fff;"><em>Tap any QR code to make it larger for scanning.</em></p>
 
     <div class="donate-row">
@@ -118,11 +97,26 @@
             <p class="muted-text">Scan with the UnionBank app.</p>
         </div>
     </div>
-    {% endif %}
 
     <div class="donate-thanks">
         <p>Salamat kaayo sa imong suporta! <strong>Maraming salamat!</strong></p>
         <p class="muted-text">Questions? Contact the LAMDAG administrator to activate your account.</p>
+    </div>
+
+    <div class="notify-box" style="margin-top:20px; padding:20px; border:1px solid rgba(255,255,255,0.2); border-radius:12px; background:rgba(255,255,255,0.06);">
+        <h3 style="font-family:'Georgia',serif; margin:0 0 8px; color:#fff;">Already paid? Notify the administrator</h3>
+        <p class="muted-text" style="margin-bottom:14px; color:#fff;">
+            Tap the button below to message the LAMDAG administrator on Messenger. Send your
+            <strong>email address</strong> and a <strong>screenshot of your payment confirmation</strong>
+            in the chat so we can activate your account right away.
+        </p>
+        <a class="btn btn-cta" style="text-decoration:none; display:inline-block;" target="_blank" rel="noopener"
+           href="https://m.me/ermaccarl">
+            Notify the Administrator on Messenger
+        </a>
+        <p class="muted-text" style="margin-top:10px; color:#fff; font-size:0.85rem;">
+            Prefer Facebook? <a href="https://www.facebook.com/ermaccarl" target="_blank" rel="noopener" style="color:#8ab4ff;">Message us here</a>.
+        </p>
     </div>
 </div>
 

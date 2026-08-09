@@ -28,5 +28,8 @@
     "suggestions": "entry.1394606073"
   },
   "trial_export_limit": 3,
+  "trial_limit_per_device": 1,
+  "trial_limit_per_ip": 3,
+  "trial_limit_window_days": 180,
   "secret_key": "3f70e8b08681d1b984213ee55f9368aa4b12da0909ae112fc148607fb468cc6a"
 }

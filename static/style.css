@@ -492,6 +492,66 @@ a.nav-school:hover {
     color: #fff;
 }
 
+.account-strip {
+    background: #1b2a1e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.82rem;
+    color: #e8e4da;
+}
+
+.account-strip-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 7px 18px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+}
+
+.account-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #8a8a8a;
+    flex: 0 0 auto;
+}
+
+.account-strip-active .account-dot { background: #3ecf6e; }
+.account-strip-trial .account-dot { background: #4da3ff; }
+.account-strip-expired .account-dot { background: #ffb14d; }
+.account-strip-disabled .account-dot { background: #ff5c5c; }
+
+.account-label {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.account-strip-expired .account-label { color: #ffb14d; }
+.account-strip-disabled .account-label { color: #ff8f8f; }
+
+.account-plan {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 0.75rem;
+}
+
+.account-expires {
+    color: #c9c4b8;
+}
+
+.account-renew {
+    margin-left: auto;
+    color: #8ab4ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.account-renew:hover {
+    text-decoration: underline;
+}
+
 .donate-thanks {
     border-top: 1px solid var(--line-soft, var(--line-strong));
     padding-top: 18px;

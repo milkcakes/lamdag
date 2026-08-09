@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from authlib.integrations.flask_client import OAuth
-import os, json, io, csv, re, secrets, sys, hmac, hashlib, base64
+import os, json, io, csv, re, secrets, sys
 import urllib.request, urllib.error
 from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
@@ -148,123 +148,6 @@ def _social_available():
                 creds["facebook_id"] and creds["facebook_secret"])
 
 
-# --- PayMongo (automatic payment activation) --------------------------------
-# Plan key -> (label, price per month in PHP, days granted)
-PAYMONGO_PLANS = {
-    "teacher_monthly": {"name": "Teacher Monthly", "price": 199, "days": 30},
-    "school_license": {"name": "School License", "price": 10000, "days": 30},
-    "division": {"name": "Division", "price": 20000, "days": 30},
-}
-
-
-def _paymongo_keys():
-    return {
-        "public_key": _env_or_cfg("PAYMONGO_PUBLIC_KEY", "paymongo_public_key"),
-        "secret_key": _env_or_cfg("PAYMONGO_SECRET_KEY", "paymongo_secret_key"),
-        "webhook_secret": _env_or_cfg("PAYMONGO_WEBHOOK_SECRET", "paymongo_webhook_secret"),
-    }
-
-
-def _paymongo_configured():
-    return bool(_paymongo_keys()["secret_key"])
-
-
-def _paymongo_price_cents(plan_key):
-    """PayMongo uses centavos (smallest unit)."""
-    plan = PAYMONGO_PLANS.get(plan_key)
-    if not plan:
-        return 0
-    return int(round(plan["price"] * 100))
-
-
-def _create_paymongo_checkout(plan_key, user_email):
-    """Create a PayMongo checkout session, return its checkout URL or None."""
-    if not _paymongo_configured():
-        return None
-    keys = _paymongo_keys()
-    plan = PAYMONGO_PLANS.get(plan_key)
-    if not plan:
-        return None
-    payload = {
-        "data": {
-            "attributes": {
-                "line_items": [{
-                    "currency": "PHP",
-                    "amount": _paymongo_price_cents(plan_key),
-                    "name": plan["name"],
-                    "quantity": 1,
-                }],
-                "payment_method_types": ["gcash", "maya", "grab_pay"],
-                "success_url": url_for("checkout_success", _external=True),
-                "cancel_url": url_for("subscribe", _external=True),
-                "metadata": {"plan": plan_key, "email": user_email},
-            }
-        }
-    }
-    auth = base64.b64encode((keys["secret_key"] + ":").encode()).decode()
-    req = urllib.request.Request(
-        "https://api.paymongo.com/v1/checkout_sessions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": "Basic " + auth,
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        return data["data"]["attributes"].get("checkout_url")
-    except Exception:
-        return None
-
-
-def _verify_paymongo_signature(body, signature_header):
-    """Verify the PayMongo-Signature header (format: t=<ts>,v1=<sig>)."""
-    if not signature_header:
-        return False
-    parts = {}
-    for item in signature_header.split(","):
-        if "=" in item:
-            k, _, v = item.partition("=")
-            parts[k.strip()] = v.strip()
-    ts = parts.get("t", "")
-    sig = parts.get("v1", "")
-    webhook_secret = _paymongo_keys().get("webhook_secret") or ""
-    if not (ts and sig and webhook_secret):
-        return False
-    payload = (ts + "." + body).encode("utf-8")
-    expected = hmac.new(webhook_secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, sig)
-
-
-def _activate_paid_user(user_email, plan_key):
-    """Grant a paid plan to the matching user account (no-op if missing)."""
-    if not user_email:
-        return False
-    plan = PAYMONGO_PLANS.get(plan_key)
-    if not plan:
-        return False
-    try:
-        conn = get_connection()
-        row = conn.execute(
-            "SELECT id FROM users WHERE email = ?", (user_email.strip().lower(),)
-        ).fetchone()
-        if not row:
-            conn.close()
-            return False
-        end = datetime.now() + timedelta(days=plan["days"])
-        conn.execute(
-            "UPDATE users SET status='active', plan=?, paid_until=? WHERE id = ?",
-            (plan_key, end.strftime("%Y-%m-%d"), row[0]),
-        )
-        conn.commit()
-        conn.close()
-        return True
-    except Exception:
-        return False
-
-
 def _csrf_token():
     token = session.get("_csrf_token")
     if not token:
@@ -284,17 +167,13 @@ def _before_request():
     session.permanent = True
     token = session.get("_csrf_token")
     if request.method == "POST":
-        if request.path == "/paymongo/webhook":
-            # Signed webhook from PayMongo — no session/cookie available.
-            return None
         sent = request.form.get("csrf_token", "")
         if not token or not sent or not secrets.compare_digest(token, sent):
             abort(400, description="Invalid or missing CSRF token")
     if not token:
         session["_csrf_token"] = secrets.token_urlsafe(32)
+    session.setdefault("_device_id", secrets.token_urlsafe(24))
 
-    if not _access_gate_enabled():
-        return
     path = request.path
     if _is_auth_free(path):
         return
@@ -307,12 +186,13 @@ def _before_request():
         return
     if session.get("_access_granted"):
         return
+    if not _access_gate_enabled():
+        return
     return redirect(url_for("access", next=path))
 
 
 def _is_auth_free(path):
-    return (path in ("/access", "/signup", "/subscribe", "/favicon.ico",
-                     "/checkout/success", "/paymongo/webhook")
+    return (path in ("/access", "/signup", "/subscribe", "/favicon.ico")
             or path.startswith("/static/")
             or path.startswith("/login/"))
 
@@ -428,6 +308,90 @@ def _get_master_code():
     return code
 
 
+def _client_ip():
+    """Best-effort client IP (honors X-Forwarded-For behind Render/nginx)."""
+    fwd = request.headers.get("X-Forwarded-For", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.remote_addr or ""
+
+
+def _device_id():
+    """Stable per-browser id stored in the session."""
+    did = session.get("_device_id") or ""
+    if not did:
+        did = secrets.token_urlsafe(24)
+        session["_device_id"] = did
+    return did
+
+
+def _trial_limit_config():
+    """(max_trials_per_device, max_trials_per_ip, window_days)."""
+    cfg = _load_config()
+    try:
+        per_device = max(1, int(cfg.get("trial_limit_per_device", 1)))
+    except (TypeError, ValueError):
+        per_device = 1
+    try:
+        per_ip = max(1, int(cfg.get("trial_limit_per_ip", 3)))
+    except (TypeError, ValueError):
+        per_ip = 3
+    try:
+        window = max(1, int(cfg.get("trial_limit_window_days", 180)))
+    except (TypeError, ValueError):
+        window = 180
+    return per_device, per_ip, window
+
+
+def _trial_creation_blocked():
+    """Return an error message if this device/IP already used up its free trials.
+
+    Blocks new trial accounts created from a device or IP that already had its
+    free trial (or too many trials) within the configured window.
+    """
+    per_device, per_ip, window = _trial_limit_config()
+    device = _device_id()
+    ip = _client_ip()
+    cutoff = (datetime.now() - timedelta(days=window)).strftime("%Y-%m-%d %H:%M")
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        if device:
+            row = cur.execute(
+                "SELECT COUNT(*) FROM users WHERE trial_device = ? AND trial_start >= ?",
+                (device, cutoff),
+            ).fetchone()
+            if row and row[0] >= per_device:
+                conn.close()
+                return "This device has already used its free trial. Please subscribe to continue using LAMDAG."
+        if ip:
+            row = cur.execute(
+                "SELECT COUNT(*) FROM users WHERE trial_ip = ? AND trial_start >= ?",
+                (ip, cutoff),
+            ).fetchone()
+            if row and row[0] >= per_ip:
+                conn.close()
+                return "Too many free trial accounts have been created from this network. Please contact the administrator to subscribe."
+        conn.close()
+    except Exception:
+        pass
+    return ""
+
+
+def _record_trial_origin(uid):
+    """Tag the user row with the device/IP that created the trial account."""
+    try:
+        conn = get_connection()
+        conn.execute(
+            "UPDATE users SET trial_device = ?, trial_ip = ? WHERE id = ?",
+            (_device_id(), _client_ip(), uid),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
 def _lookup_school_code(sent):
     """Return (school_name, plan) if the code belongs to an active school code."""
     if not sent:
@@ -541,52 +505,6 @@ def _touch_login(uid):
         pass
 
 
-@app.route("/checkout/<plan_key>", methods=["POST"])
-def checkout(plan_key):
-    """Start a PayMongo checkout for the given plan."""
-    user = _current_user()
-    if not user:
-        return redirect(url_for("access", next="/subscribe"))
-    plan = PAYMONGO_PLANS.get(plan_key)
-    if not plan:
-        return redirect(url_for("subscribe"))
-    if not _paymongo_configured():
-        return redirect(url_for("subscribe", msg="paymongo_not_configured"))
-    url = _create_paymongo_checkout(plan_key, user["email"])
-    if not url:
-        return redirect(url_for("subscribe", msg="checkout_failed"))
-    return redirect(url)
-
-
-@app.route("/checkout/success")
-def checkout_success():
-    user = _current_user()
-    return render_template("checkout_success.html", user=user)
-
-
-@app.route("/paymongo/webhook", methods=["POST"])
-def paymongo_webhook():
-    """PayMongo webhook — verifies signature, then auto-activates the account."""
-    body = request.get_data(as_text=True)
-    sig = request.headers.get("Paymongo-Signature", "")
-    if not _verify_paymongo_signature(body, sig):
-        return "invalid signature", 400
-    try:
-        event = json.loads(body)
-    except Exception:
-        return "invalid payload", 400
-    data = event.get("data") or {}
-    if data.get("type") not in ("checkout_session.payment.paid", "checkout.session.paid"):
-        return "ok", 200
-    attrs = data.get("attributes") or {}
-    checkout_session = attrs.get("checkout_session") or {}
-    metadata = checkout_session.get("metadata") or {}
-    plan_key = metadata.get("plan", "")
-    email = metadata.get("email", "")
-    _activate_paid_user(email, plan_key)
-    return "ok", 200
-
-
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if not _access_gate_enabled():
@@ -610,6 +528,8 @@ def signup():
             error = "Passwords do not match."
         elif _get_user_by_email(email):
             error = "An account with that email already exists. Try logging in instead."
+        elif _trial_creation_blocked():
+            error = _trial_creation_blocked()
         else:
             today = datetime.now()
             trial_end = today + timedelta(days=14)
@@ -626,6 +546,7 @@ def signup():
                 )
                 conn.commit()
                 uid = cur.lastrowid
+                _record_trial_origin(uid)
             finally:
                 conn.close()
             session["_user_id"] = uid
@@ -643,9 +564,7 @@ def subscribe():
     user = _current_user()
     msg = request.args.get("msg", "")
     return render_template("subscribe.html", user=user,
-                           gcash_number="09952274754", msg=msg,
-                           paymongo_configured=_paymongo_configured(),
-                           plans=PAYMONGO_PLANS)
+                           gcash_number="09952274754", msg=msg)
 
 
 @app.route("/login/google")
@@ -710,6 +629,15 @@ def _social_login(email, name, provider_id, provider):
             conn.commit()
             uid = user["id"]
         else:
+            blocked = _trial_creation_blocked()
+            if blocked:
+                conn.close()
+                session.pop("_user_id", None)
+                session.pop("_access_granted", None)
+                session.pop("_access_admin", None)
+                session.pop("_access_school", None)
+                session.pop("_access_plan", None)
+                return redirect(url_for("subscribe", msg="trial_used"))
             cur = conn.cursor()
             col = "google_id" if provider == "google" else "facebook_id"
             cur.execute(
@@ -721,6 +649,7 @@ def _social_login(email, name, provider_id, provider):
             )
             conn.commit()
             uid = cur.lastrowid
+            _record_trial_origin(uid)
     finally:
         conn.close()
     session["_user_id"] = uid
@@ -864,7 +793,58 @@ def _inject_globals():
     return {
         "school_year": _get_term_config().get("school_year", ""),
         "current_user": _current_user(),
+        "account_status": _account_status(),
     }
+
+
+PLAN_LABELS = {
+    "teacher_monthly": "Teacher Monthly",
+    "school_license": "School License",
+    "division": "Division",
+    "paid": "Paid",
+    "beta": "Beta",
+    "trial": "Free Trial",
+}
+
+
+def _account_status(user=None):
+    """Compute a friendly account status for the nav banner.
+
+    Returns a dict with keys: label, tone (active/trial/expired/disabled),
+    expires (date string), renew (bool), plan_label.
+    """
+    user = user or _current_user()
+    if not user:
+        return {}
+    today = datetime.now().strftime("%Y-%m-%d")
+    plan_label = PLAN_LABELS.get(user.get("plan") or "", user.get("plan") or "")
+    status = user.get("status", "")
+
+    if status == "disabled":
+        return {"label": "Account disabled", "tone": "disabled", "expires": "",
+                "renew": False, "plan_label": plan_label}
+
+    if status == "trial":
+        end = user.get("trial_end") or ""
+        if end and end >= today:
+            return {"label": "Free Trial", "tone": "trial", "expires": end,
+                    "renew": True, "plan_label": plan_label}
+        return {"label": "Trial ended", "tone": "expired", "expires": end,
+                "renew": True, "plan_label": plan_label}
+
+    if status == "active":
+        if user.get("plan") == "beta":
+            return {"label": "Active (Beta)", "tone": "active", "expires": "No expiry",
+                    "renew": False, "plan_label": "Beta"}
+        end = user.get("paid_until") or ""
+        if end and end >= today:
+            return {"label": "Active", "tone": "active", "expires": end,
+                    "renew": True, "plan_label": plan_label}
+        return {"label": "Expired", "tone": "expired", "expires": end,
+                "renew": True, "plan_label": plan_label}
+
+    return {"label": status.capitalize(), "tone": "expired", "expires": "",
+            "renew": True, "plan_label": plan_label}
 
 SUGGESTION_FIELDS = [
     "lesson_name", "objectives", "integration", "learner_context", "pre_lesson",

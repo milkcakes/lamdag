@@ -194,6 +194,8 @@ def _migrate():
         ("google_id", "TEXT DEFAULT ''"),
         ("facebook_id", "TEXT DEFAULT ''"),
         ("trial_exports", "INTEGER DEFAULT 0"),
+        ("trial_device", "TEXT DEFAULT ''"),
+        ("trial_ip", "TEXT DEFAULT ''"),
     ):
         if col not in user_cols:
             cursor.execute(f'ALTER TABLE users ADD COLUMN "{col}" {ctype}')
@@ -281,7 +283,9 @@ def init_database():
             last_login TEXT DEFAULT '',
             google_id TEXT DEFAULT '',
             facebook_id TEXT DEFAULT '',
-            trial_exports INTEGER DEFAULT 0
+            trial_exports INTEGER DEFAULT 0,
+            trial_device TEXT DEFAULT '',
+            trial_ip TEXT DEFAULT ''
         );
     """)
     conn.commit()
