@@ -1491,9 +1491,6 @@ def admin_users():
         if action == "activate_monthly":
             _set_paid_until(conn, uid, days=30)
             msg = "Account activated for 1 month."
-        elif action == "activate_yearly":
-            _set_paid_until(conn, uid, days=365)
-            msg = "Account activated for 1 year."
         elif action == "activate_beta":
             conn.execute(
                 "UPDATE users SET status='active', plan='beta', paid_until='' WHERE id = ?",

@@ -62,12 +62,6 @@
                         </form>
                         <form method="POST" action="/admin/users" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <input type="hidden" name="action" value="activate_yearly">
-                            <input type="hidden" name="id" value="{{ u.id }}">
-                            <button type="submit" class="btn-small" title="Activate for 1 year">+1 yr</button>
-                        </form>
-                        <form method="POST" action="/admin/users" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="action" value="activate_beta">
                             <input type="hidden" name="id" value="{{ u.id }}">
                             <button type="submit" class="btn-small" title="Full access, no expiry">Beta</button>
