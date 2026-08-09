@@ -83,7 +83,7 @@
                 <tr>
                     <td>{{ c.school_name }}</td>
                     <td>{% if c.kind == 'beta' %}<span style="color:var(--gold-deep,#a9791f);font-weight:700;">Beta</span>{% elif c.kind == 'teacher' %}Per-Teacher{% elif c.kind == 'trial' %}Trial{% else %}School{% endif %}</td>
-                    <td><code style="letter-spacing:0.15em;">{{ c.access_code }}</code></td>
+                    <td><code style="letter-spacing:0.15em;cursor:pointer;" class="access-code" title="Click to copy">{{ c.access_code }}</code></td>
                     <td>{{ c.plan }}</td>
                     <td>{{ c.created_at }}</td>
                     <td>{{ c.expires_at or 'Never' }}</td>
@@ -123,4 +123,32 @@
         </table>
     </div>
 </div>
+<script>
+    document.querySelectorAll('.access-code').forEach(function (el) {
+        el.addEventListener('click', function () {
+            var text = el.textContent.trim();
+            function copied() {
+                var orig = el.textContent;
+                el.textContent = 'Copied!';
+                el.style.color = 'var(--success,#3a7d44)';
+                setTimeout(function () {
+                    el.textContent = orig;
+                    el.style.color = '';
+                }, 1200);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(copied).catch(function () { selectCode(); });
+            } else {
+                selectCode();
+            }
+            function selectCode() {
+                var range = document.createRange();
+                range.selectNodeContents(el);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+    });
+</script>
 {% endblock %}
