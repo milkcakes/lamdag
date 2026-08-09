@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify, Response, abort
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
+from authlib.integrations.flask_client import OAuth
 import os, json, io, csv, re, secrets, sys
 import urllib.request, urllib.error
 from urllib.parse import urlparse
@@ -92,6 +93,60 @@ app.config["SESSION_PERMANENT"] = False
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=14)
 Session(app)
 
+# --- Social login (Google / Facebook) via Authlib -------------------------
+oauth = OAuth(app)
+
+
+def _env_or_cfg(name, cfg_key=None):
+    val = os.environ.get(name, "").strip()
+    if val:
+        return val
+    cfg = _load_config()
+    return str(cfg.get(cfg_key or name, "")).strip()
+
+
+def _social_credentials():
+    return {
+        "google_id": _env_or_cfg("GOOGLE_CLIENT_ID", "google_client_id"),
+        "google_secret": _env_or_cfg("GOOGLE_CLIENT_SECRET", "google_client_secret"),
+        "facebook_id": _env_or_cfg("FACEBOOK_APP_ID", "facebook_app_id"),
+        "facebook_secret": _env_or_cfg("FACEBOOK_APP_SECRET", "facebook_app_secret"),
+    }
+
+
+def _register_oauth():
+    creds = _social_credentials()
+    try:
+        if creds["google_id"] and creds["google_secret"]:
+            oauth.register(
+                name="google",
+                client_id=creds["google_id"],
+                client_secret=creds["google_secret"],
+                server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+                client_kwargs={"scope": "openid email profile"},
+            )
+        if creds["facebook_id"] and creds["facebook_secret"]:
+            oauth.register(
+                name="facebook",
+                client_id=creds["facebook_id"],
+                client_secret=creds["facebook_secret"],
+                access_token_url="https://graph.facebook.com/v19.0/oauth/access_token",
+                authorize_url="https://www.facebook.com/v19.0/dialog/oauth",
+                userinfo_endpoint="https://graph.facebook.com/me?fields=id,name,email,picture",
+                client_kwargs={"scope": "email public_profile"},
+            )
+    except Exception:
+        pass
+
+
+_register_oauth()
+
+
+def _social_available():
+    creds = _social_credentials()
+    return bool(creds["google_id"] and creds["google_secret"] or
+                creds["facebook_id"] and creds["facebook_secret"])
+
 
 def _csrf_token():
     token = session.get("_csrf_token")
@@ -136,8 +191,9 @@ def _before_request():
 
 
 def _is_auth_free(path):
-    return (path in ("/access", "/signup", "/login", "/subscribe", "/favicon.ico")
-            or path.startswith("/static/"))
+    return (path in ("/access", "/signup", "/subscribe", "/favicon.ico")
+            or path.startswith("/static/")
+            or path.startswith("/login/"))
 
 
 def _current_user():
@@ -148,7 +204,8 @@ def _current_user():
         conn = get_connection()
         row = conn.execute(
             "SELECT id, email, password_hash, name, school, status, plan, "
-            "trial_start, trial_end, paid_until, created_at, last_login "
+            "trial_start, trial_end, paid_until, created_at, last_login, "
+            "google_id, facebook_id "
             "FROM users WHERE id = ?", (uid,)
         ).fetchone()
         conn.close()
@@ -159,6 +216,7 @@ def _current_user():
             "school": row[4], "status": row[5], "plan": row[6],
             "trial_start": row[7], "trial_end": row[8], "paid_until": row[9],
             "created_at": row[10], "last_login": row[11],
+            "google_id": row[12], "facebook_id": row[13],
         }
     except Exception:
         return None
@@ -272,7 +330,9 @@ def access():
                 _touch_login(user["id"])
                 return redirect(request.args.get("next") or url_for("index"))
     return render_template("access.html", error=error, tab=tab,
-                           next_path=request.args.get("next") or "")
+                           next_path=request.args.get("next") or "",
+                           social_available=_social_available(),
+                           social_creds=_social_credentials())
 
 
 @app.route("/access/logout", methods=["POST"])
@@ -290,7 +350,8 @@ def _get_user_by_email(email):
         conn = get_connection()
         row = conn.execute(
             "SELECT id, email, password_hash, name, school, status, plan, "
-            "trial_start, trial_end, paid_until, created_at, last_login "
+            "trial_start, trial_end, paid_until, created_at, last_login, "
+            "google_id, facebook_id "
             "FROM users WHERE email = ?", (email,)
         ).fetchone()
         conn.close()
@@ -301,6 +362,7 @@ def _get_user_by_email(email):
             "school": row[4], "status": row[5], "plan": row[6],
             "trial_start": row[7], "trial_end": row[8], "paid_until": row[9],
             "created_at": row[10], "last_login": row[11],
+            "google_id": row[12], "facebook_id": row[13],
         }
     except Exception:
         return None
@@ -373,9 +435,96 @@ def subscribe():
     user = _current_user()
     return render_template("subscribe.html", user=user,
                            gcash_number="09952274754")
+
+
+@app.route("/login/google")
+def google_login():
+    creds = _social_credentials()
+    if not (creds["google_id"] and creds["google_secret"]):
+        return redirect(url_for("access"))
+    redirect_uri = url_for("google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route("/login/google/callback")
+def google_callback():
+    try:
+        token = oauth.google.authorize_access_token()
+        userinfo = oauth.google.userinfo()
+    except Exception:
+        return redirect(url_for("access"))
+    if not userinfo or not userinfo.get("email"):
+        return redirect(url_for("access"))
+    return _social_login(userinfo.get("email"), userinfo.get("name", ""),
+                         userinfo.get("sub", ""), "google")
+
+
+@app.route("/login/facebook")
+def facebook_login():
+    creds = _social_credentials()
+    if not (creds["facebook_id"] and creds["facebook_secret"]):
+        return redirect(url_for("access"))
+    redirect_uri = url_for("facebook_callback", _external=True)
+    return oauth.facebook.authorize_redirect(redirect_uri)
+
+
+@app.route("/login/facebook/callback")
+def facebook_callback():
+    try:
+        token = oauth.facebook.authorize_access_token()
+        resp = oauth.facebook.get("me?fields=id,name,email")
+        info = resp.json()
+    except Exception:
+        return redirect(url_for("access"))
+    if not info or not info.get("email"):
+        return redirect(url_for("access"))
+    return _social_login(info["email"], info.get("name", ""),
+                         str(info.get("id", "")), "facebook")
+
+
+def _social_login(email, name, provider_id, provider):
+    """Log a user in via social login, creating a free-trial account if new."""
+    email = email.strip().lower()
+    user = _get_user_by_email(email)
+    today = datetime.now()
+    trial_end = today + timedelta(days=14)
+    conn = get_connection()
+    try:
+        if user:
+            col = "google_id" if provider == "google" else "facebook_id"
+            conn.execute(
+                f"UPDATE users SET {col} = ?, last_login = ? WHERE id = ?",
+                (provider_id, today.strftime("%Y-%m-%d %H:%M"), user["id"]),
+            )
+            conn.commit()
+            uid = user["id"]
+        else:
+            cur = conn.cursor()
+            col = "google_id" if provider == "google" else "facebook_id"
+            cur.execute(
+                "INSERT INTO users (email, password_hash, name, school, status, plan, "
+                "trial_start, trial_end, paid_until, created_at, " + col + ") "
+                "VALUES (?, '', ?, '', 'trial', '', ?, ?, '', ?, ?)",
+                (email, name, today.strftime("%Y-%m-%d"), trial_end.strftime("%Y-%m-%d"),
+                 today.strftime("%Y-%m-%d %H:%M"), provider_id),
+            )
+            conn.commit()
+            uid = cur.lastrowid
+    finally:
+        conn.close()
+    session["_user_id"] = uid
+    session.pop("_access_granted", None)
+    session.pop("_access_admin", None)
     session.pop("_access_school", None)
     session.pop("_access_plan", None)
-    return redirect(url_for("access"))
+    user = _current_user()
+    if user and not _user_has_access(user):
+        return redirect(url_for("subscribe"))
+    nxt = request.args.get("next") or ""
+    if nxt.startswith("/") and not nxt.startswith("//"):
+        return redirect(nxt)
+    return redirect(url_for("index"))
+
 
 from database.init_db import get_connection
 from generators.ilaw_docx import generate_ilaw_docx

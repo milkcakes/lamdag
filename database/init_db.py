@@ -188,6 +188,14 @@ def _migrate():
     sa_cols = {row[1] for row in cursor.fetchall()}
     if "kind" not in sa_cols:
         cursor.execute('ALTER TABLE school_access ADD COLUMN "kind" TEXT DEFAULT "school"')
+    cursor.execute("PRAGMA table_info(users)")
+    user_cols = {row[1] for row in cursor.fetchall()}
+    for col, ctype in (
+        ("google_id", "TEXT DEFAULT ''"),
+        ("facebook_id", "TEXT DEFAULT ''"),
+    ):
+        if col not in user_cols:
+            cursor.execute(f'ALTER TABLE users ADD COLUMN "{col}" {ctype}')
     conn.commit()
     conn.close()
 
@@ -269,7 +277,9 @@ def init_database():
             trial_end TEXT DEFAULT '',
             paid_until TEXT DEFAULT '',
             created_at TEXT NOT NULL,
-            last_login TEXT DEFAULT ''
+            last_login TEXT DEFAULT '',
+            google_id TEXT DEFAULT '',
+            facebook_id TEXT DEFAULT ''
         );
     """)
     conn.commit()
