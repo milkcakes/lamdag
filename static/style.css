@@ -435,11 +435,11 @@ a.nav-school:hover {
     margin: 0 0 24px;
     padding-left: 1.2rem;
     line-height: 1.9;
-    color: var(--text-soft, #6b6255);
+    color: #fff;
 }
 
 .pay-steps strong {
-    color: var(--ink-1, #2b2620);
+    color: #fff;
 }
 
 .donate-thanks {
