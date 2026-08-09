@@ -2914,7 +2914,7 @@ legend {
     .section-head h2 { font-size: 14pt; }
 }
 
-/* Floating chat widget */
+/* Floating Messenger chat widget */
 .chat-fab {
     position: fixed;
     right: 18px;
@@ -2923,17 +2923,17 @@ legend {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #b98a2e, #8a641f);
+    background: linear-gradient(135deg, #0099ff, #0064e0);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 6px 18px rgba(0, 100, 224, 0.45);
     transition: transform 0.15s, box-shadow 0.15s;
 }
-.chat-fab svg { width: 26px; height: 26px; }
-.chat-fab:hover { transform: scale(1.06); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4); }
+.chat-fab svg { width: 30px; height: 30px; }
+.chat-fab:hover { transform: scale(1.06); box-shadow: 0 8px 22px rgba(0, 100, 224, 0.55); }
 .chat-fab.open { display: none; }
 
 .chat-popover {
@@ -2946,7 +2946,7 @@ legend {
     border-radius: 14px;
     overflow: hidden;
     background: var(--card, #2a241c);
-    border: 1px solid rgba(185, 138, 46, 0.45);
+    border: 1px solid rgba(0, 153, 255, 0.45);
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
     display: none;
     font-size: 0.9rem;
@@ -2959,7 +2959,7 @@ legend {
     justify-content: space-between;
     gap: 8px;
     padding: 12px 14px;
-    background: linear-gradient(135deg, #b98a2e, #8a641f);
+    background: linear-gradient(135deg, #0099ff, #0064e0);
     color: #fff;
     font-weight: 600;
 }
