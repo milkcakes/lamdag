@@ -5,9 +5,25 @@
     <title>ILAW LESSON PLAN</title>
     <style>
         {{ print_css }}
+        {% if watermark %}
+        .lamdag-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 48pt;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            color: rgba(180, 180, 180, 0.45);
+            z-index: 9999;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        {% endif %}
     </style>
 </head>
 <body>
+{% if watermark %}<div class="lamdag-watermark">LAMDAG TRIAL VERSION</div>{% endif %}
 {% include "partials/plan_document.html" %}
 </body>
 </html>

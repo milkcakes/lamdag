@@ -193,6 +193,7 @@ def _migrate():
     for col, ctype in (
         ("google_id", "TEXT DEFAULT ''"),
         ("facebook_id", "TEXT DEFAULT ''"),
+        ("trial_exports", "INTEGER DEFAULT 0"),
     ):
         if col not in user_cols:
             cursor.execute(f'ALTER TABLE users ADD COLUMN "{col}" {ctype}')
@@ -279,7 +280,8 @@ def init_database():
             created_at TEXT NOT NULL,
             last_login TEXT DEFAULT '',
             google_id TEXT DEFAULT '',
-            facebook_id TEXT DEFAULT ''
+            facebook_id TEXT DEFAULT '',
+            trial_exports INTEGER DEFAULT 0
         );
     """)
     conn.commit()

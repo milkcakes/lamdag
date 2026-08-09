@@ -52,11 +52,12 @@ VALUE_W = TABLE_W - LABEL_W
 
 
 class ExemplarPDF(FPDF):
-    def __init__(self):
+    def __init__(self, watermark=False):
         super().__init__(orientation="P", unit="mm", format=(PAGE_W, PAGE_H))
         self.set_margins(M_LEFT, M_TOP, M_RIGHT)
         self.set_auto_page_break(auto=False)
         self._font = "Helvetica"
+        self._watermark = watermark
         for i, (name, style) in enumerate((("Body", ""), ("Body", "B"), ("Body", "I"), ("Body", "BI"))):
             for _f in _FONT_FILES[i]:
                 _p = os.path.join(FONT_DIR, _f)
@@ -67,6 +68,22 @@ class ExemplarPDF(FPDF):
                         break
                     except Exception:
                         continue
+
+    def add_page(self):
+        super().add_page()
+        if self._watermark:
+            self._stamp_watermark()
+
+    def _stamp_watermark(self):
+        try:
+            self.set_font(self._font, "B", 40)
+            self.set_text_color(200, 200, 200)
+            with self.rotation(45, x=PAGE_W / 2, y=PAGE_H / 2):
+                self.set_xy(10, PAGE_H / 2 - 15)
+                self.cell(PAGE_W - 20, 30, "LAMDAG TRIAL", align="C")
+            self.set_text_color(0, 0, 0)
+        except Exception:
+            pass
 
     def sanitize(self, text):
         if self._font != "Helvetica":
@@ -333,8 +350,8 @@ def _objectives_text(data):
     )
 
 
-def generate_exemplar_pdf(data, output_path):
-    pdf = ExemplarPDF()
+def generate_exemplar_pdf(data, output_path, watermark=False):
+    pdf = ExemplarPDF(watermark=watermark)
     pdf.add_page()
 
     _add_letterhead(pdf, data)

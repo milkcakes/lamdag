@@ -10,6 +10,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 from generators import exemplar_layout as L
+from generators.watermark import add_docx_watermark
 
 LABEL_W = Inches(2.15)
 VALUE_W = Inches(4.5)
@@ -275,7 +276,7 @@ def _add_signature(doc, data):
             run.underline = underline
 
 
-def generate_exemplar_docx(data, output_path):
+def generate_exemplar_docx(data, output_path, watermark=False):
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -362,6 +363,9 @@ def generate_exemplar_docx(data, output_path):
 
     # --- Signature block ---
     _add_signature(doc, data)
+
+    if watermark:
+        add_docx_watermark(doc)
 
     doc.save(output_path)
     return output_path

@@ -9,6 +9,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 from generators import ilaw_layout as L
+from generators.watermark import add_docx_watermark
 
 LABEL_W = Inches(2.15)
 VALUE_W = Inches(4.5)
@@ -188,7 +189,7 @@ def _add_rule(doc):
     pPr.append(pBdr)
 
 
-def generate_ilaw_docx(data, output_path):
+def generate_ilaw_docx(data, output_path, watermark=False):
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -283,6 +284,9 @@ def generate_ilaw_docx(data, output_path):
             run.font.name = "Calibri"
             run.bold = bold
             run.underline = underline
+
+    if watermark:
+        add_docx_watermark(doc)
 
     doc.save(output_path)
     return output_path

@@ -10,7 +10,7 @@
     {% if sent %}
     <div class="alert alert-success">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Salamat! Na-save ang imong feedback.
+        Thank you! Your feedback has been saved.
     </div>
     {% endif %}
     {% if error %}
@@ -33,7 +33,7 @@
                 </div>
             </div>
             <div class="form-group" style="margin-bottom:14px;">
-                <label for="area">Unsa nga parte sa app ang imong gigamit?</label>
+                <label for="area">Which part of the app were you using?</label>
                 <select id="area" name="area">
                     <option value="">-- Select --</option>
                     <option value="Dashboard (Home)">Dashboard (Home)</option>
@@ -53,18 +53,18 @@
         </div>
 
         <div class="form-group" style="margin-bottom:14px;">
-            <label for="liked">Unsa ang nindot / nagana nga maayo?</label>
-            <textarea id="liked" name="liked" rows="2" placeholder="e.g., Sayon ang pagpili og competency, nindot ang template..."></textarea>
+            <label for="liked">What did you like / what worked well?</label>
+            <textarea id="liked" name="liked" rows="2" placeholder="e.g., Easy to pick a competency, great template..."></textarea>
         </div>
 
         <div class="form-group" style="margin-bottom:14px;">
-            <label for="problem">Unsa ang problema / naglibog ka? <span class="muted-text" style="font-weight:normal;">(iha ang step/part)</span></label>
-            <textarea id="problem" name="problem" rows="2" placeholder="e.g., Sa Step 2, dili nako makita ang akong napili nga week..."></textarea>
+            <label for="problem">What was the problem / what confused you? <span class="muted-text" style="font-weight:normal;">(indicate the step/part)</span></label>
+            <textarea id="problem" name="problem" rows="2" placeholder="e.g., In Step 2, I can't find the week I selected..."></textarea>
         </div>
 
         <div class="form-group" style="margin-bottom:14px;">
-            <label for="suggestions">Unsa ang imong sugyot aron ma-improve?</label>
-            <textarea id="suggestions" name="suggestions" rows="2" placeholder="e.g., Palihog pag-add og ..."></textarea>
+            <label for="suggestions">What is your suggestion to improve?</label>
+            <textarea id="suggestions" name="suggestions" rows="2" placeholder="e.g., Please add ..."></textarea>
         </div>
 
         <div class="form-row">
@@ -73,7 +73,7 @@
                 <input type="text" id="name" name="name" placeholder="e.g., Maria Santos" autocomplete="off">
             </div>
             <div class="form-group" style="margin-bottom:14px;">
-                <label for="email">Email <span class="muted-text" style="font-weight:normal;">(optional, para maka-follow-up mi)</span></label>
+                <label for="email">Email <span class="muted-text" style="font-weight:normal;">(optional, so we can follow up)</span></label>
                 <input type="email" id="email" name="email" placeholder="e.g., maria@gmail.com" autocomplete="off">
             </div>
         </div>
@@ -111,9 +111,9 @@
                     <span class="chip chip-warn" title="{{ f.sync_note }}">Local only</span>
                     {% endif %}
                 </div>
-                {% if f.liked %}<div style="font-size:9.5pt; margin-top:6px;"><strong>Nindot:</strong> {{ f.liked }}</div>{% endif %}
-                {% if f.problem %}<div style="font-size:9.5pt; margin-top:4px; color:var(--danger);"><strong>Problema:</strong> {{ f.problem }}</div>{% endif %}
-                {% if f.suggestions %}<div style="font-size:9.5pt; margin-top:4px; color:var(--ink-2);"><strong>Sugyot:</strong> {{ f.suggestions }}</div>{% endif %}
+                {% if f.liked %}<div style="font-size:9.5pt; margin-top:6px;"><strong>Liked:</strong> {{ f.liked }}</div>{% endif %}
+                {% if f.problem %}<div style="font-size:9.5pt; margin-top:4px; color:var(--danger);"><strong>Problem:</strong> {{ f.problem }}</div>{% endif %}
+                {% if f.suggestions %}<div style="font-size:9.5pt; margin-top:4px; color:var(--ink-2);"><strong>Suggestion:</strong> {{ f.suggestions }}</div>{% endif %}
             </div>
             <form method="POST" action="/feedback/delete/{{ f.id }}" onsubmit="return confirm('Delete this feedback entry?')" style="flex-shrink:0;">
                 <button type="submit" class="btn-small" style="color:var(--danger); border-color:var(--danger-line);" title="Delete"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
@@ -122,7 +122,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="no-data"><p>Wala pay feedback nga na-submit.</p></div>
+    <div class="no-data"><p>No feedback submitted yet.</p></div>
     {% endif %}
 </div>
 {% endblock %}

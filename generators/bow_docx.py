@@ -11,6 +11,8 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+from generators.watermark import add_docx_watermark
+
 
 def _set_cell_shading(cell, color):
     shading = OxmlElement("w:shd")
@@ -135,7 +137,7 @@ def _info_table(doc, data):
     return table
 
 
-def generate_bow_docx(data, output_path):
+def generate_bow_docx(data, output_path, watermark=False):
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -228,6 +230,9 @@ def generate_bow_docx(data, output_path):
         elif week_start is not None:
             week_start.cells[1].merge(r_.cells[1])
             prev_key = key
+
+    if watermark:
+        add_docx_watermark(doc)
 
     doc.save(output_path)
     return output_path

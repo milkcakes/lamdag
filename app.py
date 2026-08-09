@@ -205,7 +205,7 @@ def _current_user():
         row = conn.execute(
             "SELECT id, email, password_hash, name, school, status, plan, "
             "trial_start, trial_end, paid_until, created_at, last_login, "
-            "google_id, facebook_id "
+            "google_id, facebook_id, trial_exports "
             "FROM users WHERE id = ?", (uid,)
         ).fetchone()
         conn.close()
@@ -217,6 +217,7 @@ def _current_user():
             "trial_start": row[7], "trial_end": row[8], "paid_until": row[9],
             "created_at": row[10], "last_login": row[11],
             "google_id": row[12], "facebook_id": row[13],
+            "trial_exports": row[14] or 0,
         }
     except Exception:
         return None
@@ -240,6 +241,46 @@ def _has_any_access():
         return True
     user = _current_user()
     return bool(user and _user_has_access(user))
+
+
+def _trial_export_limit():
+    """Number of exports a free trial user may download (configurable)."""
+    cfg = _load_config()
+    try:
+        return max(1, int(cfg.get("trial_export_limit", 3)))
+    except (TypeError, ValueError):
+        return 3
+
+
+def _is_trial_user(user=None):
+    user = user or _current_user()
+    return bool(user and user.get("status") == "trial")
+
+
+def _trial_export_blocked():
+    """If the current user is a trial user who used up their export limit,
+    return a redirect to /subscribe; otherwise None."""
+    user = _current_user()
+    if not _is_trial_user(user):
+        return None
+    used = int(user.get("trial_exports") or 0)
+    if used >= _trial_export_limit():
+        return redirect(url_for("subscribe", msg="limit"))
+    return None
+
+
+def _record_trial_export():
+    """Count one export for the current user (trial users only)."""
+    user = _current_user()
+    if not _is_trial_user(user):
+        return
+    try:
+        conn = get_connection()
+        conn.execute("UPDATE users SET trial_exports = trial_exports + 1 WHERE id = ?", (user["id"],))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
 
 def _access_gate_enabled():
@@ -433,8 +474,9 @@ def signup():
 @app.route("/subscribe")
 def subscribe():
     user = _current_user()
+    msg = request.args.get("msg", "")
     return render_template("subscribe.html", user=user,
-                           gcash_number="09952274754")
+                           gcash_number="09952274754", msg=msg)
 
 
 @app.route("/login/google")
@@ -1025,6 +1067,9 @@ def _export_dir(subject):
 
 @app.route("/export/docx")
 def export_docx():
+    blocked = _trial_export_blocked()
+    if blocked:
+        return blocked
     data = _plan_data()
 
     safe_grade = _safe_filename_component(data["grade_level"])
@@ -1035,12 +1080,16 @@ def export_docx():
         filename = f"{safe_subject}_{safe_grade}_{safe_date}_T{data['term']}_W{data['week']}.docx"
     output_path = os.path.join(_export_dir(data["subject"]), filename)
 
-    generate_ilaw_docx(data, output_path)
+    generate_ilaw_docx(data, output_path, watermark=_is_trial_user())
+    _record_trial_export()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
 @app.route("/export/pdf")
 def export_pdf():
+    blocked = _trial_export_blocked()
+    if blocked:
+        return blocked
     data = _plan_data()
 
     safe_grade = _safe_filename_component(data["grade_level"])
@@ -1051,24 +1100,30 @@ def export_pdf():
         filename = f"{safe_subject}_{safe_grade}_{safe_date}_T{data['term']}_W{data['week']}.pdf"
     output_path = os.path.join(_export_dir(data["subject"]), filename)
 
+    watermark = _is_trial_user()
     if HTML is not None:
         try:
             css_path = os.path.join(_resource_dir(), "static", "style.css")
             with open(css_path, "r", encoding="utf-8") as f:
                 css = f.read()
             logo_path = os.path.join(_resource_dir(), "static", "deped_logo.png")
-            html = render_template("pdf_plan.html", data=data, print_css=css, logo_path=logo_path)
+            html = render_template("pdf_plan.html", data=data, print_css=css, logo_path=logo_path, watermark=watermark)
             HTML(string=html).write_pdf(output_path)
+            _record_trial_export()
             return send_file(output_path, as_attachment=True, download_name=filename)
         except Exception:
             pass  # fall through to the pure-Python generator
 
-    generate_ilaw_pdf(data, output_path)
+    generate_ilaw_pdf(data, output_path, watermark=watermark)
+    _record_trial_export()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
 @app.route("/export/exemplar-pdf")
 def export_exemplar_pdf():
+    blocked = _trial_export_blocked()
+    if blocked:
+        return blocked
     data = _plan_data()
 
     safe_grade = _safe_filename_component(data["grade_level"])
@@ -1079,19 +1134,22 @@ def export_exemplar_pdf():
         filename = f"{safe_subject}_{safe_grade}_{safe_date}_Exemplar_T{data['term']}_W{data['week']}.pdf"
     output_path = os.path.join(_export_dir(data["subject"]), filename)
 
+    watermark = _is_trial_user()
     if HTML is not None:
         try:
             css_path = os.path.join(_resource_dir(), "static", "style.css")
             with open(css_path, "r", encoding="utf-8") as f:
                 css = f.read()
             logo_path = os.path.join(_resource_dir(), "static", "deped_logo.png")
-            html = render_template("pdf_exemplar.html", data=data, print_css=css, logo_path=logo_path)
+            html = render_template("pdf_exemplar.html", data=data, print_css=css, logo_path=logo_path, watermark=watermark)
             HTML(string=html).write_pdf(output_path)
+            _record_trial_export()
             return send_file(output_path, as_attachment=True, download_name=filename)
         except Exception:
             pass  # fall through to the pure-Python generator
 
-    generate_exemplar_pdf(data, output_path)
+    generate_exemplar_pdf(data, output_path, watermark=watermark)
+    _record_trial_export()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
@@ -2280,6 +2338,9 @@ def bow():
 
 @app.route("/bow/export/docx")
 def bow_export_docx():
+    blocked = _trial_export_blocked()
+    if blocked:
+        return blocked
     grade = request.args.get("grade", "")
     subject = request.args.get("subject", "")
     term = request.args.get("term", "")
@@ -2307,12 +2368,16 @@ def bow_export_docx():
         filename += f"_Term{term}"
     filename += ".docx"
     output_path = os.path.join(DESKTOP, filename)
-    generate_bow_docx(data, output_path)
+    generate_bow_docx(data, output_path, watermark=_is_trial_user())
+    _record_trial_export()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
 @app.route("/bow/export/csv")
 def bow_export_csv():
+    blocked = _trial_export_blocked()
+    if blocked:
+        return blocked
     grade = request.args.get("grade", "")
     subject = request.args.get("subject", "")
     term = request.args.get("term", "")
@@ -2334,6 +2399,7 @@ def bow_export_csv():
     if term:
         filename += f"_Term{term}"
     filename += ".csv"
+    _record_trial_export()
     return send_file(io.BytesIO(buf.getvalue().encode("utf-8-sig")),
                      mimetype="text/csv",
                      as_attachment=True,
@@ -2342,6 +2408,9 @@ def bow_export_csv():
 
 @app.route("/bow/export/pdf")
 def bow_export_pdf():
+    blocked = _trial_export_blocked()
+    if blocked:
+        return blocked
     grade = request.args.get("grade", "")
     subject = request.args.get("subject", "")
     fname = request.args.get("file", "")
@@ -2350,6 +2419,7 @@ def bow_export_pdf():
     if fname:
         for p in find_bow_extras(grade, subject):
             if os.path.basename(p) == fname:
+                _record_trial_export()
                 return send_file(p, mimetype="application/pdf", as_attachment=True,
                                  download_name=fname)
         return redirect(url_for("bow"))
@@ -2357,6 +2427,7 @@ def bow_export_pdf():
     if not path:
         return redirect(url_for("bow"))
     filename = os.path.basename(path)
+    _record_trial_export()
     return send_file(path, mimetype="application/pdf", as_attachment=True,
                      download_name=filename)
 

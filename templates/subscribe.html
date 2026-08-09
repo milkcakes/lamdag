@@ -5,6 +5,13 @@
         <h2>Subscribe to LAMDAG</h2>
     </div>
 
+    {% if msg == 'limit' %}
+    <div class="alert alert-error" style="margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        You've reached the free trial export limit. Subscribe to keep exporting lesson plans, exemplars, and Budget of Work files.
+    </div>
+    {% endif %}
+
     {% if user %}
     <p class="muted-text" style="margin-bottom:16px;">
         Hi <strong>{{ user.name or user.email }}</strong>, your current plan
