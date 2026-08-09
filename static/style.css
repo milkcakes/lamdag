@@ -343,6 +343,25 @@ a.nav-school:hover {
     background: var(--card, transparent);
 }
 
+.donate-card.selectable {
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.donate-card.selectable:hover {
+    border-color: var(--gold, #b98a2e);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+.donate-card.selectable:active {
+    transform: scale(0.98);
+}
+
+.donate-card.selectable.selected {
+    border-color: var(--gold, #b98a2e);
+    border-width: 2px;
+    box-shadow: 0 0 0 1px var(--gold, #b98a2e), 0 2px 12px rgba(185,138,46,0.25);
+}
+
 .donate-card h3 {
     font-family: 'Georgia', serif;
     font-size: 1.05rem;

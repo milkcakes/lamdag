@@ -28,17 +28,17 @@
     {% endif %}
 
     <div class="donate-row">
-        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+        <div class="donate-card selectable" data-plan="Teacher Monthly" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>Teacher Monthly</h3>
             <p class="plan-price">₱199<span>/month</span></p>
             <p class="muted-text">Best for trying it out.</p>
         </div>
-        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+        <div class="donate-card selectable" data-plan="School License" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>School License</h3>
             <p class="plan-price">₱10,000<span>/month</span></p>
             <p class="muted-text">All teachers in one school.</p>
         </div>
-        <div class="donate-card" style="flex:1 1 200px; max-width:200px;">
+        <div class="donate-card selectable" data-plan="Division" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>Division</h3>
             <p class="plan-price">₱20,000<span>/month</span></p>
             <p class="muted-text">Whole division / district.</p>
@@ -115,5 +115,12 @@
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeQr();
     });
+    function selectPlan(card) {
+        var cards = document.querySelectorAll('.donate-card.selectable');
+        cards.forEach(function (c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+        var steps = document.querySelector('.pay-steps');
+        if (steps) steps.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 </script>
 {% endblock %}
