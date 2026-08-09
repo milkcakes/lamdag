@@ -32,16 +32,34 @@
             <h3>Teacher Monthly</h3>
             <p class="plan-price">₱199<span>/month</span></p>
             <p class="muted-text">Best for trying it out.</p>
+            {% if paymongo_configured and user %}
+            <form method="POST" action="/checkout/teacher_monthly" style="margin-top:12px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-cta" style="width:100%; padding:0.6rem 0.8rem;">Pay ₱199</button>
+            </form>
+            {% endif %}
         </div>
         <div class="donate-card selectable" data-plan="School License" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>School License</h3>
             <p class="plan-price">₱10,000<span>/month</span></p>
             <p class="muted-text">All teachers in one school.</p>
+            {% if paymongo_configured and user %}
+            <form method="POST" action="/checkout/school_license" style="margin-top:12px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-cta" style="width:100%; padding:0.6rem 0.8rem;">Pay ₱10,000</button>
+            </form>
+            {% endif %}
         </div>
         <div class="donate-card selectable" data-plan="Division" style="flex:1 1 200px; max-width:200px; cursor:pointer;" onclick="selectPlan(this)">
             <h3>Division</h3>
             <p class="plan-price">₱20,000<span>/month</span></p>
             <p class="muted-text">Whole division / district.</p>
+            {% if paymongo_configured and user %}
+            <form method="POST" action="/checkout/division" style="margin-top:12px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-cta" style="width:100%; padding:0.6rem 0.8rem;">Pay ₱20,000</button>
+            </form>
+            {% endif %}
         </div>
     </div>
 
@@ -51,13 +69,22 @@
         <p class="payment-summary-plan"><strong id="summary-plan"></strong></p>
         <p class="payment-summary-amount"><span id="summary-amount"></span> per month</p>
     </div>
+    {% if paymongo_configured %}
+    <ol class="pay-steps">
+        <li>Choose your plan and tap <strong>Pay</strong>.</li>
+        <li>Complete payment securely with GCash, Maya, or GrabPay.</li>
+        <li>Your account is activated <strong>automatically</strong> — no need to message the administrator.</li>
+    </ol>
+    {% else %}
     <ol class="pay-steps">
         <li>Choose your plan.</li>
         <li>Send payment via <strong>GCash {{ gcash_number }}</strong> (or scan any QR below).</li>
         <li>After paying, <strong>message the LAMDAG administrator</strong> with your email address and the payment reference number.</li>
         <li>The administrator activates your account — usually within a few hours.</li>
     </ol>
+    {% endif %}
 
+    {% if not paymongo_configured %}
     <p class="muted-text" style="margin-bottom:16px; color:#fff;"><em>Tap any QR code to make it larger for scanning.</em></p>
 
     <div class="donate-row">
@@ -91,6 +118,7 @@
             <p class="muted-text">Scan with the UnionBank app.</p>
         </div>
     </div>
+    {% endif %}
 
     <div class="donate-thanks">
         <p>Salamat kaayo sa imong suporta! <strong>Maraming salamat!</strong></p>

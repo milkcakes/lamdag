@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="max-width:640px;">
+    <div class="manage-head">
+        <h2>Payment received!</h2>
+    </div>
+    <div class="draft-banner" style="margin-bottom:16px;">
+        <div class="draft-banner-info">
+            <div class="draft-banner-title">Thank you for subscribing to LAMDAG.</div>
+        </div>
+    </div>
+    <p class="muted-text" style="margin-bottom:16px;">
+        Your payment is being confirmed. Once PayMongo verifies it, your account is
+        activated automatically — usually within a minute. No need to message an
+        administrator.
+    </p>
+    {% if user %}
+    <p style="margin-bottom:24px;">
+        Signed in as <strong>{{ user.name or user.email }}</strong>.
+    </p>
+    <a href="/" class="btn btn-cta" style="text-decoration:none;">Go to LAMDAG</a>
+    {% else %}
+    <a href="/access" class="btn btn-cta" style="text-decoration:none;">Sign in</a>
+    {% endif %}
+</div>
+{% endblock %}

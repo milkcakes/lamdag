@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, s
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from authlib.integrations.flask_client import OAuth
-import os, json, io, csv, re, secrets, sys
+import os, json, io, csv, re, secrets, sys, hmac, hashlib, base64
 import urllib.request, urllib.error
 from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
@@ -148,6 +148,123 @@ def _social_available():
                 creds["facebook_id"] and creds["facebook_secret"])
 
 
+# --- PayMongo (automatic payment activation) --------------------------------
+# Plan key -> (label, price per month in PHP, days granted)
+PAYMONGO_PLANS = {
+    "teacher_monthly": {"name": "Teacher Monthly", "price": 199, "days": 30},
+    "school_license": {"name": "School License", "price": 10000, "days": 30},
+    "division": {"name": "Division", "price": 20000, "days": 30},
+}
+
+
+def _paymongo_keys():
+    return {
+        "public_key": _env_or_cfg("PAYMONGO_PUBLIC_KEY", "paymongo_public_key"),
+        "secret_key": _env_or_cfg("PAYMONGO_SECRET_KEY", "paymongo_secret_key"),
+        "webhook_secret": _env_or_cfg("PAYMONGO_WEBHOOK_SECRET", "paymongo_webhook_secret"),
+    }
+
+
+def _paymongo_configured():
+    return bool(_paymongo_keys()["secret_key"])
+
+
+def _paymongo_price_cents(plan_key):
+    """PayMongo uses centavos (smallest unit)."""
+    plan = PAYMONGO_PLANS.get(plan_key)
+    if not plan:
+        return 0
+    return int(round(plan["price"] * 100))
+
+
+def _create_paymongo_checkout(plan_key, user_email):
+    """Create a PayMongo checkout session, return its checkout URL or None."""
+    if not _paymongo_configured():
+        return None
+    keys = _paymongo_keys()
+    plan = PAYMONGO_PLANS.get(plan_key)
+    if not plan:
+        return None
+    payload = {
+        "data": {
+            "attributes": {
+                "line_items": [{
+                    "currency": "PHP",
+                    "amount": _paymongo_price_cents(plan_key),
+                    "name": plan["name"],
+                    "quantity": 1,
+                }],
+                "payment_method_types": ["gcash", "maya", "grab_pay"],
+                "success_url": url_for("checkout_success", _external=True),
+                "cancel_url": url_for("subscribe", _external=True),
+                "metadata": {"plan": plan_key, "email": user_email},
+            }
+        }
+    }
+    auth = base64.b64encode((keys["secret_key"] + ":").encode()).decode()
+    req = urllib.request.Request(
+        "https://api.paymongo.com/v1/checkout_sessions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + auth,
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        return data["data"]["attributes"].get("checkout_url")
+    except Exception:
+        return None
+
+
+def _verify_paymongo_signature(body, signature_header):
+    """Verify the PayMongo-Signature header (format: t=<ts>,v1=<sig>)."""
+    if not signature_header:
+        return False
+    parts = {}
+    for item in signature_header.split(","):
+        if "=" in item:
+            k, _, v = item.partition("=")
+            parts[k.strip()] = v.strip()
+    ts = parts.get("t", "")
+    sig = parts.get("v1", "")
+    webhook_secret = _paymongo_keys().get("webhook_secret") or ""
+    if not (ts and sig and webhook_secret):
+        return False
+    payload = (ts + "." + body).encode("utf-8")
+    expected = hmac.new(webhook_secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, sig)
+
+
+def _activate_paid_user(user_email, plan_key):
+    """Grant a paid plan to the matching user account (no-op if missing)."""
+    if not user_email:
+        return False
+    plan = PAYMONGO_PLANS.get(plan_key)
+    if not plan:
+        return False
+    try:
+        conn = get_connection()
+        row = conn.execute(
+            "SELECT id FROM users WHERE email = ?", (user_email.strip().lower(),)
+        ).fetchone()
+        if not row:
+            conn.close()
+            return False
+        end = datetime.now() + timedelta(days=plan["days"])
+        conn.execute(
+            "UPDATE users SET status='active', plan=?, paid_until=? WHERE id = ?",
+            (plan_key, end.strftime("%Y-%m-%d"), row[0]),
+        )
+        conn.commit()
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
 def _csrf_token():
     token = session.get("_csrf_token")
     if not token:
@@ -167,6 +284,9 @@ def _before_request():
     session.permanent = True
     token = session.get("_csrf_token")
     if request.method == "POST":
+        if request.path == "/paymongo/webhook":
+            # Signed webhook from PayMongo — no session/cookie available.
+            return None
         sent = request.form.get("csrf_token", "")
         if not token or not sent or not secrets.compare_digest(token, sent):
             abort(400, description="Invalid or missing CSRF token")
@@ -191,7 +311,8 @@ def _before_request():
 
 
 def _is_auth_free(path):
-    return (path in ("/access", "/signup", "/subscribe", "/favicon.ico")
+    return (path in ("/access", "/signup", "/subscribe", "/favicon.ico",
+                     "/checkout/success", "/paymongo/webhook")
             or path.startswith("/static/")
             or path.startswith("/login/"))
 
@@ -420,6 +541,52 @@ def _touch_login(uid):
         pass
 
 
+@app.route("/checkout/<plan_key>", methods=["POST"])
+def checkout(plan_key):
+    """Start a PayMongo checkout for the given plan."""
+    user = _current_user()
+    if not user:
+        return redirect(url_for("access", next="/subscribe"))
+    plan = PAYMONGO_PLANS.get(plan_key)
+    if not plan:
+        return redirect(url_for("subscribe"))
+    if not _paymongo_configured():
+        return redirect(url_for("subscribe", msg="paymongo_not_configured"))
+    url = _create_paymongo_checkout(plan_key, user["email"])
+    if not url:
+        return redirect(url_for("subscribe", msg="checkout_failed"))
+    return redirect(url)
+
+
+@app.route("/checkout/success")
+def checkout_success():
+    user = _current_user()
+    return render_template("checkout_success.html", user=user)
+
+
+@app.route("/paymongo/webhook", methods=["POST"])
+def paymongo_webhook():
+    """PayMongo webhook — verifies signature, then auto-activates the account."""
+    body = request.get_data(as_text=True)
+    sig = request.headers.get("Paymongo-Signature", "")
+    if not _verify_paymongo_signature(body, sig):
+        return "invalid signature", 400
+    try:
+        event = json.loads(body)
+    except Exception:
+        return "invalid payload", 400
+    data = event.get("data") or {}
+    if data.get("type") != "checkout.session.paid":
+        return "ok", 200
+    attrs = data.get("attributes") or {}
+    checkout_session = attrs.get("checkout_session") or {}
+    metadata = checkout_session.get("metadata") or {}
+    plan_key = metadata.get("plan", "")
+    email = metadata.get("email", "")
+    _activate_paid_user(email, plan_key)
+    return "ok", 200
+
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if not _access_gate_enabled():
@@ -476,7 +643,9 @@ def subscribe():
     user = _current_user()
     msg = request.args.get("msg", "")
     return render_template("subscribe.html", user=user,
-                           gcash_number="09952274754", msg=msg)
+                           gcash_number="09952274754", msg=msg,
+                           paymongo_configured=_paymongo_configured(),
+                           plans=PAYMONGO_PLANS)
 
 
 @app.route("/login/google")
