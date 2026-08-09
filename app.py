@@ -576,7 +576,7 @@ def paymongo_webhook():
     except Exception:
         return "invalid payload", 400
     data = event.get("data") or {}
-    if data.get("type") != "checkout.session.paid":
+    if data.get("type") not in ("checkout_session.payment.paid", "checkout.session.paid"):
         return "ok", 200
     attrs = data.get("attributes") or {}
     checkout_session = attrs.get("checkout_session") or {}
