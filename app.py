@@ -206,7 +206,7 @@ def _current_user():
         row = conn.execute(
             "SELECT id, email, password_hash, name, school, status, plan, "
             "trial_start, trial_end, paid_until, created_at, last_login, "
-            "google_id, facebook_id, trial_exports "
+            "google_id, facebook_id, trial_exports, trial_generates "
             "FROM users WHERE id = ?", (uid,)
         ).fetchone()
         conn.close()
@@ -219,6 +219,7 @@ def _current_user():
             "created_at": row[10], "last_login": row[11],
             "google_id": row[12], "facebook_id": row[13],
             "trial_exports": row[14] or 0,
+            "trial_generates": row[15] or 0,
         }
     except Exception:
         return None
@@ -229,7 +230,9 @@ def _user_has_access(user):
         return False
     today = datetime.now().strftime("%Y-%m-%d")
     if user["status"] == "trial":
-        return bool(user.get("trial_end")) and user["trial_end"] >= today
+        # Free trial is limited by generate count (see _trial_generate_blocked),
+        # not by time — a trial account stays active until its 5 generates run out.
+        return True
     if user["status"] == "active":
         if user.get("plan") == "beta":
             return True
@@ -244,13 +247,13 @@ def _has_any_access():
     return bool(user and _user_has_access(user))
 
 
-def _trial_export_limit():
-    """Number of exports a free trial user may download (configurable)."""
+def _trial_generate_limit():
+    """Number of generates (downloads/saves/copies) a free trial user may make (configurable)."""
     cfg = _load_config()
     try:
-        return max(1, int(cfg.get("trial_export_limit", 3)))
+        return max(1, int(cfg.get("trial_generate_limit", 5)))
     except (TypeError, ValueError):
-        return 3
+        return 5
 
 
 def _is_trial_user(user=None):
@@ -258,26 +261,26 @@ def _is_trial_user(user=None):
     return bool(user and user.get("status") == "trial")
 
 
-def _trial_export_blocked():
-    """If the current user is a trial user who used up their export limit,
+def _trial_generate_blocked():
+    """If the current user is a trial user who used up their generate limit,
     return a redirect to /subscribe; otherwise None."""
     user = _current_user()
     if not _is_trial_user(user):
         return None
-    used = int(user.get("trial_exports") or 0)
-    if used >= _trial_export_limit():
+    used = int(user.get("trial_generates") or 0)
+    if used >= _trial_generate_limit():
         return redirect(url_for("subscribe", msg="limit"))
     return None
 
 
-def _record_trial_export():
-    """Count one export for the current user (trial users only)."""
+def _record_trial_generate():
+    """Count one generate (download/save/copy) for the current user (trial users only)."""
     user = _current_user()
     if not _is_trial_user(user):
         return
     try:
         conn = get_connection()
-        conn.execute("UPDATE users SET trial_exports = trial_exports + 1 WHERE id = ?", (user["id"],))
+        conn.execute("UPDATE users SET trial_generates = trial_generates + 1 WHERE id = ?", (user["id"],))
         conn.commit()
         conn.close()
     except Exception:
@@ -556,7 +559,8 @@ def signup():
             session.pop("_access_plan", None)
             return redirect(url_for("index"))
     return render_template("signup.html", error=error,
-                           next_path=request.args.get("next") or "")
+                           next_path=request.args.get("next") or "",
+                           trial_generate_limit=_trial_generate_limit())
 
 
 @app.route("/subscribe")
@@ -825,12 +829,16 @@ def _account_status(user=None):
                 "renew": False, "plan_label": plan_label}
 
     if status == "trial":
-        end = user.get("trial_end") or ""
-        if end and end >= today:
-            return {"label": "Free Trial", "tone": "trial", "expires": end,
-                    "renew": True, "plan_label": plan_label}
-        return {"label": "Trial ended", "tone": "expired", "expires": end,
-                "renew": True, "plan_label": plan_label}
+        used = int(user.get("trial_generates") or 0)
+        limit = _trial_generate_limit()
+        remaining = max(0, limit - used)
+        if remaining <= 0:
+            return {"label": "Free trial used up", "tone": "expired",
+                    "expires": "", "renew": True, "plan_label": plan_label,
+                    "detail": f"{used} of {limit} generates used"}
+        return {"label": "Free Trial", "tone": "trial",
+                "expires": "", "renew": True, "plan_label": plan_label,
+                "detail": f"{remaining} of {limit} generates left"}
 
     if status == "active":
         if user.get("plan") == "beta":
@@ -1216,7 +1224,7 @@ def _export_dir(subject):
 
 @app.route("/export/docx")
 def export_docx():
-    blocked = _trial_export_blocked()
+    blocked = _trial_generate_blocked()
     if blocked:
         return blocked
     data = _plan_data()
@@ -1230,13 +1238,13 @@ def export_docx():
     output_path = os.path.join(_export_dir(data["subject"]), filename)
 
     generate_ilaw_docx(data, output_path, watermark=_is_trial_user())
-    _record_trial_export()
+    _record_trial_generate()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
 @app.route("/export/pdf")
 def export_pdf():
-    blocked = _trial_export_blocked()
+    blocked = _trial_generate_blocked()
     if blocked:
         return blocked
     data = _plan_data()
@@ -1258,19 +1266,19 @@ def export_pdf():
             logo_path = os.path.join(_resource_dir(), "static", "deped_logo.png")
             html = render_template("pdf_plan.html", data=data, print_css=css, logo_path=logo_path, watermark=watermark)
             HTML(string=html).write_pdf(output_path)
-            _record_trial_export()
+            _record_trial_generate()
             return send_file(output_path, as_attachment=True, download_name=filename)
         except Exception:
             pass  # fall through to the pure-Python generator
 
     generate_ilaw_pdf(data, output_path, watermark=watermark)
-    _record_trial_export()
+    _record_trial_generate()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
 @app.route("/export/exemplar-pdf")
 def export_exemplar_pdf():
-    blocked = _trial_export_blocked()
+    blocked = _trial_generate_blocked()
     if blocked:
         return blocked
     data = _plan_data()
@@ -1292,14 +1300,24 @@ def export_exemplar_pdf():
             logo_path = os.path.join(_resource_dir(), "static", "deped_logo.png")
             html = render_template("pdf_exemplar.html", data=data, print_css=css, logo_path=logo_path, watermark=watermark)
             HTML(string=html).write_pdf(output_path)
-            _record_trial_export()
+            _record_trial_generate()
             return send_file(output_path, as_attachment=True, download_name=filename)
         except Exception:
             pass  # fall through to the pure-Python generator
 
     generate_exemplar_pdf(data, output_path, watermark=watermark)
-    _record_trial_export()
+    _record_trial_generate()
     return send_file(output_path, as_attachment=True, download_name=filename)
+
+
+@app.route("/generate/copy", methods=["POST"])
+def generate_copy():
+    """Count a 'Copy as Text' as one free-trial generate (trial users only)."""
+    blocked = _trial_generate_blocked()
+    if blocked:
+        return jsonify({"ok": False, "redirect": url_for("subscribe", msg="limit")})
+    _record_trial_generate()
+    return jsonify({"ok": True})
 
 
 @app.route("/suggest/regenerate")
@@ -1494,6 +1512,12 @@ def save_plan():
     mode = request.form.get("mode", "new")
     loaded_id = session.get("_loaded_plan_id")
 
+    is_new = not (mode == "update" and loaded_id)
+    if is_new:
+        blocked = _trial_generate_blocked()
+        if blocked:
+            return blocked
+
     conn = get_connection()
     cursor = conn.cursor()
     now = _now()
@@ -1521,6 +1545,8 @@ def save_plan():
         )
     conn.commit()
     conn.close()
+    if is_new:
+        _record_trial_generate()
     for key in ALL_FIELDS:
         session.pop(key, None)
     session.pop("draft_step", None)
@@ -1647,22 +1673,20 @@ def admin_users():
             )
             msg = "Account activated as beta tester (no expiry)."
         elif action == "extend_trial":
-            trial_end = datetime.now() + timedelta(days=14)
             conn.execute(
-                "UPDATE users SET status='trial', trial_end=? WHERE id = ?",
-                (trial_end.strftime("%Y-%m-%d"), uid),
+                "UPDATE users SET status='trial', trial_generates=0 WHERE id = ?",
+                (uid,),
             )
-            msg = "Trial extended by 14 days."
+            msg = "Trial refreshed: 5 new generates granted."
         elif action == "disable":
             conn.execute("UPDATE users SET status='disabled' WHERE id = ?", (uid,))
             msg = "Account disabled."
         elif action == "enable":
-            trial_end = datetime.now() + timedelta(days=14)
             conn.execute(
-                "UPDATE users SET status='trial', trial_end=? WHERE id = ?",
-                (trial_end.strftime("%Y-%m-%d"), uid),
+                "UPDATE users SET status='trial', trial_generates=0 WHERE id = ?",
+                (uid,),
             )
-            msg = "Account re-enabled with a 14-day trial."
+            msg = "Account re-enabled with a fresh 5-generate trial."
         elif action == "delete":
             conn.execute("DELETE FROM users WHERE id = ?", (uid,))
             msg = "Account deleted."
@@ -1672,7 +1696,7 @@ def admin_users():
     conn = get_connection()
     rows = conn.execute(
         "SELECT id, email, name, school, status, plan, trial_start, trial_end, "
-        "paid_until, created_at, last_login FROM users ORDER BY id DESC"
+        "paid_until, created_at, last_login, trial_generates FROM users ORDER BY id DESC"
     ).fetchall()
     conn.close()
     users = [
@@ -1680,10 +1704,11 @@ def admin_users():
             "id": r[0], "email": r[1], "name": r[2], "school": r[3],
             "status": r[4], "plan": r[5], "trial_start": r[6], "trial_end": r[7],
             "paid_until": r[8], "created_at": r[9], "last_login": r[10],
+            "trial_generates": r[11] or 0,
         }
         for r in rows
     ]
-    return render_template("admin_users.html", users=users, msg=msg)
+    return render_template("admin_users.html", users=users, msg=msg, trial_generate_limit=_trial_generate_limit())
 
 
 def _set_paid_until(conn, uid, days):
@@ -2484,7 +2509,7 @@ def bow():
 
 @app.route("/bow/export/docx")
 def bow_export_docx():
-    blocked = _trial_export_blocked()
+    blocked = _trial_generate_blocked()
     if blocked:
         return blocked
     grade = request.args.get("grade", "")
@@ -2515,13 +2540,13 @@ def bow_export_docx():
     filename += ".docx"
     output_path = os.path.join(DESKTOP, filename)
     generate_bow_docx(data, output_path, watermark=_is_trial_user())
-    _record_trial_export()
+    _record_trial_generate()
     return send_file(output_path, as_attachment=True, download_name=filename)
 
 
 @app.route("/bow/export/csv")
 def bow_export_csv():
-    blocked = _trial_export_blocked()
+    blocked = _trial_generate_blocked()
     if blocked:
         return blocked
     grade = request.args.get("grade", "")
@@ -2545,7 +2570,7 @@ def bow_export_csv():
     if term:
         filename += f"_Term{term}"
     filename += ".csv"
-    _record_trial_export()
+    _record_trial_generate()
     return send_file(io.BytesIO(buf.getvalue().encode("utf-8-sig")),
                      mimetype="text/csv",
                      as_attachment=True,
@@ -2554,7 +2579,7 @@ def bow_export_csv():
 
 @app.route("/bow/export/pdf")
 def bow_export_pdf():
-    blocked = _trial_export_blocked()
+    blocked = _trial_generate_blocked()
     if blocked:
         return blocked
     grade = request.args.get("grade", "")
@@ -2565,7 +2590,7 @@ def bow_export_pdf():
     if fname:
         for p in find_bow_extras(grade, subject):
             if os.path.basename(p) == fname:
-                _record_trial_export()
+                _record_trial_generate()
                 return send_file(p, mimetype="application/pdf", as_attachment=True,
                                  download_name=fname)
         return redirect(url_for("bow"))
@@ -2573,7 +2598,7 @@ def bow_export_pdf():
     if not path:
         return redirect(url_for("bow"))
     filename = os.path.basename(path)
-    _record_trial_export()
+    _record_trial_generate()
     return send_file(path, mimetype="application/pdf", as_attachment=True,
                      download_name=filename)
 

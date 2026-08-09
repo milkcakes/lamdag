@@ -194,6 +194,7 @@ def _migrate():
         ("google_id", "TEXT DEFAULT ''"),
         ("facebook_id", "TEXT DEFAULT ''"),
         ("trial_exports", "INTEGER DEFAULT 0"),
+        ("trial_generates", "INTEGER DEFAULT 0"),
         ("trial_device", "TEXT DEFAULT ''"),
         ("trial_ip", "TEXT DEFAULT ''"),
     ):
@@ -284,6 +285,7 @@ def init_database():
             google_id TEXT DEFAULT '',
             facebook_id TEXT DEFAULT '',
             trial_exports INTEGER DEFAULT 0,
+            trial_generates INTEGER DEFAULT 0,
             trial_device TEXT DEFAULT '',
             trial_ip TEXT DEFAULT ''
         );

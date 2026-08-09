@@ -58,10 +58,10 @@
                 </span>
             </div>
             <h1>Create your account</h1>
-            <p>Free for 14 days — no payment needed.</p>
+            <p>Free trial — {{ trial_generate_limit }} lesson-plan generates.</p>
             <div class="trial-note">
                 <span>✨</span>
-                <span>Your <strong>14-day free trial</strong> starts today. Full access, no credit card required.</span>
+                <span>Your <strong>free trial</strong> starts today. Make up to <strong>{{ trial_generate_limit }} generates</strong> — each download, save, or copy-as-text counts as one. No credit card required.</span>
             </div>
             <form method="POST" action="/signup?next={{ next_path }}" class="gate-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

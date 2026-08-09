@@ -8,7 +8,7 @@
     {% if msg == 'limit' %}
     <div class="alert alert-error" style="margin-bottom:16px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        You've reached the free trial export limit. Subscribe to keep exporting lesson plans, exemplars, and Budget of Work files.
+        You've used up your free trial generates. Subscribe to keep downloading, saving, and copying lesson plans, exemplars, and Budget of Work files.
     </div>
     {% elif msg == 'trial_used' %}
     <div class="alert alert-error" style="margin-bottom:16px;">
@@ -21,14 +21,14 @@
     <p class="muted-text" style="margin-bottom:16px;">
         Hi <strong>{{ user.name or user.email }}</strong>, your current plan
         <strong>
-        {% if user.status == 'trial' %}free trial (ends {{ user.trial_end }}){% else %}{{ user.plan or user.status }}{% endif %}
+        {% if user.status == 'trial' %}free trial ({{ user.trial_generates or 0 }} generates used){% else %}{{ user.plan or user.status }}{% endif %}
         </strong>
-        {% if user.status == 'active' %}runs until {{ user.paid_until }}.{% else %}has ended or is expiring.{% endif %}
+        {% if user.status == 'active' %}runs until {{ user.paid_until }}.{% else %}has ended or used up its generates.{% endif %}
         Choose a plan below to keep using LAMDAG.
     </p>
     {% else %}
     <p class="muted-text" style="margin-bottom:16px;">
-        Your free trial has ended. Choose a plan below to keep using LAMDAG.
+        Choose a plan below to start using LAMDAG.
     </p>
     {% endif %}
 

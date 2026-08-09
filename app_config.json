@@ -27,7 +27,7 @@
     "problem": "entry.343717928",
     "suggestions": "entry.1394606073"
   },
-  "trial_export_limit": 3,
+  "trial_generate_limit": 5,
   "trial_limit_per_device": 1,
   "trial_limit_per_ip": 3,
   "trial_limit_window_days": 180,

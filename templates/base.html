@@ -119,10 +119,11 @@
             <span class="account-dot"></span>
             <span class="account-label">{{ account_status.label }}</span>
             <span class="account-plan">{{ account_status.plan_label }}</span>
-            {% if account_status.expires %}
+            {% if account_status.detail %}
+            <span class="account-expires"><strong>{{ account_status.detail }}</strong></span>
+            {% elif account_status.expires %}
             <span class="account-expires">
                 {% if account_status.tone == 'active' %}Renews / expires
-                {% elif account_status.tone == 'trial' %}Trial ends
                 {% else %}Expired
                 {% endif %}
                 <strong>{{ account_status.expires }}</strong>

@@ -9,8 +9,8 @@
         </div>
     </div>
     <p class="muted-text" style="margin-bottom:16px;">
-        Accounts start a 14-day free trial automatically. After the teacher pays via GCash,
-        activate their plan here. <strong>Beta</strong> gives full access with no expiry (not admin).
+        Accounts start a free trial with {{ trial_generate_limit }} generates (downloads, saves, and copy-as-text each count as one).
+        After the teacher pays via GCash, activate their plan here. <strong>Beta</strong> gives full access with no expiry (not admin).
     </p>
 
     {% if msg %}
@@ -30,7 +30,7 @@
                     <th>School</th>
                     <th>Status</th>
                     <th>Plan</th>
-                    <th>Trial ends</th>
+                    <th>Generates</th>
                     <th>Paid until</th>
                     <th>Joined</th>
                     <th>Actions</th>
@@ -49,7 +49,7 @@
                         {% if u.status == 'active' and u.plan == 'beta' %} · <em>Beta</em>{% endif %}
                     </td>
                     <td>{{ u.plan or '—' }}</td>
-                    <td>{{ u.trial_end or '—' }}</td>
+                    <td>{{ u.trial_generates }} / {{ trial_generate_limit }}</td>
                     <td>{{ u.paid_until or '—' }}</td>
                     <td>{{ u.created_at }}</td>
                     <td>
@@ -70,7 +70,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="action" value="extend_trial">
                             <input type="hidden" name="id" value="{{ u.id }}">
-                            <button type="submit" class="btn-small" title="Extend trial by 14 days">+14d</button>
+                            <button type="submit" class="btn-small" title="Reset trial: grant 5 new generates">+5 gen</button>
                         </form>
                         <form method="POST" action="/admin/users" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
